@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail majstra - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Photo Gallery Styles */
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .photo-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            aspect-ratio: 4/3;
+            background: #f3f4f6;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .photo-item:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Reviews Styles */
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .review-item {
+            padding: 1.5rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .review-author {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .review-stars {
+            color: #fbbf24;
+            font-size: 1.1rem;
+        }
+
+        .review-text {
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .photo-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <!-- Provider Detail -->
+    <section class="section">
+        <div class="container">
+            <!-- Provider Header -->
+            <div class="card mb-4">
+                <div class="grid grid-2">
+                    <div style="display: flex; gap: 1.5rem; align-items: start;">
+                        <!-- Photo -->
+                        <div
+                            style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; background: #f3f4f6; flex-shrink: 0;">
+                            <img id="provider-photo" src="" alt="Profile"
+                                style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            <div id="provider-photo-placeholder"
+                                style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                                🏢</div>
+                        </div>
+                        <!-- Info -->
+                        <div>
+                            <h1 class="card-title" id="provider-name" style="font-size: 2rem;">Načítavam...</h1>
+                            <p class="card-text" id="provider-category"></p>
+                            <p class="card-text" id="provider-region"></p>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="provider-badge badge-pro" id="provider-plan-badge"></span>
+                        <div style="margin-top: 1rem;">
+                            <button class="btn btn-primary" id="chat-btn" onclick="startChat(window.providerId)">💬
+                                Napísať správu</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Provider Info Grid -->
+            <div class="grid grid-3 mb-4">
+                <div class="card text-center">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">⭐</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;" id="provider-rating">5.0</div>
+                    <p class="card-text">Hodnotenie</p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📞</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;" id="provider-phone">-</div>
+                    <p class="card-text">Telefón</p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌐</div>
+                    <div style="font-size: 1rem; font-weight: 600;" id="provider-website">-</div>
+                    <p class="card-text">Webstránka</p>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="card mb-4">
+                <h2 class="card-title">O nás</h2>
+                <p class="card-text" id="provider-description">Načítavam popis...</p>
+            </div>
+
+            <!-- Photo Gallery (Pro/Pro+ only) -->
+            <div id="photos-section" class="card mb-4" style="display: none;">
+                <h2 class="card-title">Naše realizácie</h2>
+                <div id="photos-gallery" class="photo-gallery">
+                    <!-- Photos will be loaded here -->
+                </div>
+                <p id="no-photos-message"
+                    style="display: none; color: var(--text-gray); text-align: center; padding: 1rem;">
+                    Zatiaľ neboli pridané žiadne fotografie.
+                </p>
+            </div>
+
+            <!-- Reviews (Pro/Pro+ only) -->
+            <div id="reviews-section" class="card mb-4" style="display: none;">
+                <h2 class="card-title">Hodnotenia zákazníkov</h2>
+                <div id="reviews-list" class="reviews-list">
+                    <!-- Reviews will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/chat-manager.js"></script>
+    <script src="js/chat-starter.js"></script>
+    <script src="js/providers-data.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/provider-detail.js"></script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>
