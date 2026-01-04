@@ -52,7 +52,7 @@
 
         try {
             // Fetch from Backend API
-            const response = await fetch(`${API_BASE_URL}/api/provider/${providerId}`);
+            const response = await fetch(`${API_BASE_URL}/api/providers/${providerId}`);
             if (!response.ok) throw new Error('Failed to fetch provider');
 
             const provider = await response.json();

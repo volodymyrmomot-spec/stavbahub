@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         stripeConfig = await configRes.json();
 
         // Fetch Provider
-        const providerRes = await fetch(`${API_BASE_URL}/api/provider/${loggedInProviderId}`);
+        const providerRes = await fetch(`${API_BASE_URL}/api/providers/${loggedInProviderId}`);
         if (providerRes.ok) {
             provider = await providerRes.json();
         } else {

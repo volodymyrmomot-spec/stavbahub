@@ -92,10 +92,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 };
 
                 // 3. Register via Backend API
-                const registerResponse = await fetch(`${API_BASE_URL}/api/register`, {
+                // We add role: 'provider' to ensure backend knows the user type
+                const payload = { ...registrationData, role: 'provider' };
+
+                const registerResponse = await fetch(`${API_BASE_URL}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(registrationData)
+                    body: JSON.stringify(payload)
                 });
 
                 const registerResult = await registerResponse.json();

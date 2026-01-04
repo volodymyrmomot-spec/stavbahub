@@ -47,43 +47,50 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Check if email already exists
-        const customers = JSON.parse(localStorage.getItem('customers') || '[]');
-        const providers = JSON.parse(localStorage.getItem('customProviders') || '[]');
-
-        const emailExists = customers.some(c => c.email === email) || providers.some(p => p.email === email);
-
-        if (emailExists) {
-            showError('Tento email je už zaregistrovaný.');
-            return;
-        }
-
-        // Create customer account
-        const newCustomer = {
-            id: 'customer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        // Create customer account payload
+        const customerData = {
             name: name,
             email: email,
-            password: password, // In production, this should be hashed
+            password: password,
             phone: phone || '',
-            role: 'customer',
-            created_at: new Date().toISOString()
+            role: 'customer'
         };
 
-        // Save to localStorage
-        customers.push(newCustomer);
-        localStorage.setItem('customers', JSON.stringify(customers));
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(customerData)
+            });
 
-        // Auto-login
-        localStorage.setItem('loggedInCustomerId', newCustomer.id);
-        localStorage.setItem('loggedInCustomer', JSON.stringify(newCustomer));
+            const data = await response.json();
 
-        // Show success message
-        showSuccess('Účet bol úspešne vytvorený! Presmerovávame vás...');
+            if (!response.ok) {
+                throw new Error(data.error || 'Registrácia zlyhala.');
+            }
 
-        // Redirect to customer dashboard after short delay
-        setTimeout(() => {
-            window.location.href = 'customer-dashboard.html';
-        }, 1500);
+            // Success - mimic the login response structure
+            const user = data.user || data.customer || data.provider; // adapt to whatever backend returns
+
+            // Save to localStorage for session management
+            if (user) {
+                localStorage.setItem('loggedInCustomerId', user.id);
+                localStorage.setItem('loggedInCustomer', JSON.stringify(user));
+            }
+
+            showSuccess('Účet bol úspešne vytvorený! Presmerovávame vás...');
+
+            // Redirect to customer dashboard
+            setTimeout(() => {
+                window.location.href = 'customer-dashboard.html';
+            }, 1500);
+
+        } catch (error) {
+            console.error('Registration error:', error);
+            showError(error.message || 'Chyba pri registrácii. Skúste to znova.');
+        }
     });
 
     function isValidEmail(email) {
