@@ -24,7 +24,7 @@
                 <h1 class="card-title text-center" style="font-size: 2rem; margin-bottom: 2rem;">Registrácia majstra
                 </h1>
 
-                <form id="register-form">
+                <form id="register-form" action="#" method="post">
                     <div class="grid grid-2">
                         <div class="form-group">
                             <label class="form-label">Názov firmy *</label>
@@ -119,45 +119,31 @@
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
                         Zaregistrovať sa
                     </button>
-<!DOCTYPE html>
-<html lang="sk">
-<head>
-  <meta charset="UTF-8" />
-  <title>Registrácia majstra</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-</head>
-<body>
+                </form>
 
-<h1>Registrácia majstra</h1>
+                <div
+                    style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                    <p style="color: var(--text-gray);">
+                        Už máte účet? <a href="login.html"
+                            style="color: var(--primary-blue); font-weight: 600;">Prihláste sa</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<div id="message" style="margin:10px 0;"></div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
 
-<form id="register-form" action="#" method="post">
-  <input type="text" name="company-name" placeholder="Názov firmy" required />
-  <input type="email" name="email" placeholder="Email" required />
-  <input type="password" name="password" placeholder="Heslo" required />
-  <input type="password" name="confirm-password" placeholder="Potvrdiť heslo" required />
-  <input type="text" name="region" placeholder="Kraj" required />
-  <input type="text" name="city" placeholder="Mesto" required />
-
-  <select name="category" required>
-    <option value="">Kategória služby</option>
-    <option value="construction">Stavba a rekonštrukcia</option>
-  </select>
-
-  <select name="plan" required>
-    <option value="basic">Basic</option>
-    <option value="pro">Pro</option>
-    <option value="pro_plus">Pro+</option>
-  </select>
-
-  <button type="submit">Registrovať</button>
-</form>
-
-<script>
-  const API_BASE_URL = "https://stavbahub.onrender.com";
-</script>
-<script src="js/provider-register.js"></script>
-
+    <script src="js/config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/provider-register.js"></script>
+    <script src="js/back-button.js"></script>
 </body>
+
 </html>
