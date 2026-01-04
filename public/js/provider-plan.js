@@ -16,11 +16,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
         // Fetch Config
-        const configRes = await fetch('/api/config');
+        const configRes = await fetch(`${API_BASE_URL}/api/config`);
         stripeConfig = await configRes.json();
 
         // Fetch Provider
-        const providerRes = await fetch(`/api/provider/${loggedInProviderId}`);
+        const providerRes = await fetch(`${API_BASE_URL}/api/provider/${loggedInProviderId}`);
         if (providerRes.ok) {
             provider = await providerRes.json();
         } else {
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             this.textContent = 'Načítavam...';
 
             try {
-                const response = await fetch('/api/create-billing-portal-session', {
+                const response = await fetch(`${API_BASE_URL}/api/create-billing-portal-session`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ providerId: loggedInProviderId })
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!confirm('Naozaj chcete prejsť na plán Basic? Stratíte výhody vyššieho plánu.')) return;
 
             try {
-                const response = await fetch('/api/set-plan-basic', {
+                const response = await fetch(`${API_BASE_URL}/api/set-plan-basic`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ providerId: loggedInProviderId })
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             try {
-                const response = await fetch('/api/create-checkout-session', {
+                const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

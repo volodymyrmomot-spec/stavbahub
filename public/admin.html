@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Stavbahub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .admin-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .btn-verify {
+            background-color: #16a34a;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-revoke {
+            background-color: #dc2626;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .doc-link {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <div class="admin-container">
+        <h1>Správa Majstrov</h1>
+
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Meno</th>
+                    <th>Email</th>
+                    <th>Plán</th>
+                    <th>Status</th>
+                    <th>Dokumenty</th>
+                    <th>Akcie</th>
+                </tr>
+            </thead>
+            <tbody id="providers-table-body">
+                <!-- Rows loaded via JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function loadProviders() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/providers`);
+                const providers = await res.json();
+                const tbody = document.getElementById('providers-table-body');
+                tbody.innerHTML = '';
+
+                providers.forEach(p => {
+                    const row = document.createElement('tr');
+
+                    const docsHtml = p.verification_docs.length > 0
+                        ? p.verification_docs.map((d, i) => `<a href="${d}" target="_blank" class="doc-link">Dokument ${i + 1}</a>`).join(', ')
+                        : 'Žiadne';
+
+                    const verifyBtn = p.is_verified
+                        ? `<button class="btn-revoke" onclick="toggleVerify('${p.id}', false)">Zrušiť overenie</button>`
+                        : `<button class="btn-verify" onclick="toggleVerify('${p.id}', true)">Overiť</button>`;
+
+                    row.innerHTML = `
+                        <td>${p.name}</td>
+                        <td>${p.email}</td>
+                        <td><span class="plan-badge badge-${p.plan.replace('_', '-')}">${p.plan.toUpperCase()}</span></td>
+                        <td>${p.is_verified ? '✅ Overený' : '❌ Neoverený'}</td>
+                        <td>${docsHtml}</td>
+                        <td>${verifyBtn}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading providers:', error);
+            }
+        }
+
+        async function toggleVerify(providerId, isVerified) {
+            if (!confirm(`Naozaj chcete ${isVerified ? 'overiť' : 'zrušiť overenie'} tohto majstra?`)) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ providerId, isVerified })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadProviders(); // Reload table
+                }
+            } catch (error) {
+                alert('Chyba pri aktualizácii.');
+            }
+        }
+
+        loadProviders();
+    </script>
+    <script src="js/config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>

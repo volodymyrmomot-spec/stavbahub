@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoznam majstrov - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <!-- Main Content -->
+    <section class="section">
+        <div class="container">
+            <h1 class="section-title">Naši majstri</h1>
+
+            <!-- Filters -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <form class="search-form" style="grid-template-columns: 1fr 1fr 1fr 1fr auto;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Kraj</label>
+                        <select name="region" class="form-select">
+                            <option value="">Všetky kraje</option>
+                            <option value="Bratislavský">Bratislavský kraj</option>
+                            <option value="Trnavský">Trnavský kraj</option>
+                            <option value="Trenčiansky">Trenčiansky kraj</option>
+                            <option value="Nitriansky">Nitriansky kraj</option>
+                            <option value="Žilinský">Žilinský kraj</option>
+                            <option value="Banskobystrický">Banskobystrický kraj</option>
+                            <option value="Prešovský">Prešovský kraj</option>
+                            <option value="Košický">Košický kraj</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Mesto</label>
+                        <input type="text" id="city" name="city" class="form-select" placeholder="Zadajte mesto">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Kategória</label>
+                        <select name="category" class="form-select">
+                            <option value="">Všetky kategórie</option>
+                            <option value="Stavba a rekonštrukcia">Stavba a rekonštrukcia</option>
+                            <option value="Interiér a nábytok">Interiér a nábytok</option>
+                            <option value="Záhrada a exteriér">Záhrada a exteriér</option>
+                            <option value="Wellness a relax">Wellness a relax</option>
+                            <option value="Smart Home">Smart Home</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Plán</label>
+                        <select name="plan" class="form-select">
+                            <option value="">Všetky plány</option>
+                            <option value="basic">Basic</option>
+                            <option value="pro">Pro</option>
+                            <option value="pro-plus">Pro+</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="btn btn-primary">Filtrovať</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Providers Grid -->
+            <div id="providers-container" class="grid grid-3">
+                <!-- Providers will be loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/providers-data.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/providers-loader.js"></script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>

@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Fetch Stripe Config
     try {
-        const res = await fetch('/api/config');
+        const res = await fetch(`${API_BASE_URL}/api/config`);
         stripeConfig = await res.json();
     } catch (e) {
         console.error('Failed to load Stripe config', e);
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 };
 
                 // 3. Register via Backend API
-                const registerResponse = await fetch('/api/register', {
+                const registerResponse = await fetch(`${API_BASE_URL}/api/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(registrationData)
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         showSuccess('Presmerovávame vás na platobnú bránu...');
 
         try {
-            const response = await fetch('/api/create-checkout-session', {
+            const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

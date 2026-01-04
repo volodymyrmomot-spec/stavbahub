@@ -23,7 +23,7 @@
             this.textContent = 'Načítavam...';
 
             try {
-                const response = await fetch('/api/create-billing-portal-session', {
+                const response = await fetch(`${API_BASE_URL}/api/create-billing-portal-session`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ providerId: loggedInProviderId })
@@ -52,7 +52,7 @@
 
         try {
             // Fetch from Backend API
-            const response = await fetch(`/api/provider/${providerId}`);
+            const response = await fetch(`${API_BASE_URL}/api/provider/${providerId}`);
             if (!response.ok) throw new Error('Failed to fetch provider');
 
             const provider = await response.json();
