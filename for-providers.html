@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cenník pre majstrov - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container text-center">
+            <h1>Cenník pre majstrov</h1>
+            <p>Vyberte si plán, ktorý vám vyhovuje</p>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="section">
+        <div class="container">
+            <div class="grid grid-3">
+                <!-- Basic Plan -->
+                <div class="pricing-card">
+                    <h3 class="pricing-title">Basic</h3>
+                    <div class="pricing-price">Zadarmo</div>
+                    <ul class="pricing-features">
+                        <li>✅ Základný profil</li>
+                        <li>❌ Kontaktné údaje (skryté)</li>
+                        <li>❌ Žiadne fotografie</li>
+                        <li>❌ Žiadne hodnotenia</li>
+                        <li>❌ Nižšie umiestnenie</li>
+                        <li>✅ Možnosť prijímať správy</li>
+                    </ul>
+                    <a href="register-firm.html" class="btn btn-outline" style="width: 100%;">Začať zadarmo</a>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="pricing-card featured">
+                    <div
+                        style="background-color: var(--primary-blue); color: white; padding: 0.5rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-weight: 700;">
+                        ODPORÚČANÉ
+                    </div>
+                    <h3 class="pricing-title">Pro</h3>
+                    <div class="pricing-price">19€<span style="font-size: 1rem; font-weight: 400;">/mesiac</span></div>
+                    <ul class="pricing-features">
+                        <li>✅ Všetko z BASIC</li>
+                        <li>✅ Verejne viditeľné kontaktné údaje</li>
+                        <li>✅ Max. 3 fotografie práce</li>
+                        <li>✅ Hodnotenia zákazníkov viditeľné</li>
+                        <li>✅ Vyššie umiestnenie v zozname</li>
+                    </ul>
+                    <a href="register-firm.html" class="btn btn-primary" style="width: 100%;">Vybrať Pro</a>
+                </div>
+
+                <!-- Pro+ Plan -->
+                <div class="pricing-card">
+                    <h3 class="pricing-title">Pro+</h3>
+                    <div class="pricing-price">39€<span style="font-size: 1rem; font-weight: 400;">/mesiac</span></div>
+                    <ul class="pricing-features">
+                        <li>✅ Všetko z PRO</li>
+                        <li>✅ Max. 30 fotografií práce</li>
+                        <li>✅ TOP umiestnenie</li>
+                        <li>✅ Prémiový odznak PRO+</li>
+                        <li>✅ Reklama firmy na Instagrame</li>
+                    </ul>
+                    <a href="register-firm.html" class="btn btn-primary" style="width: 100%;">Vybrať Pro+</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+    <script src="js/back-button.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/for-providers.js"></script>
+</body>
+
+</html>

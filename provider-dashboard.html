@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Môj profil - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-content">
+            <a href="index.html" class="logo">Stavbahub</a>
+            <nav>
+                <ul class="nav-list" id="main-nav">
+                    <li><a href="index.html" class="nav-link">Domov</a></li>
+                    <li><a href="providers.html" class="nav-link">Majstri</a></li>
+                    <li><a href="for-providers.html" class="nav-link">Cenník</a></li>
+                    <!-- Dynamic nav items will be inserted here -->
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Provider Dashboard -->
+    <section class="section">
+        <div class="container">
+            <h1 class="section-title">Môj profil</h1>
+
+            <!-- Basic Information Card -->
+            <div class="card mb-4">
+                <h2 class="card-title" style="margin-bottom: 1.5rem;">Základné informácie</h2>
+                <div class="grid grid-2">
+                    <div>
+                        <div style="margin-bottom: 1rem;">
+                            <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Názov firmy</p>
+                            <h3 class="card-title" id="provider-name">Načítavam...</h3>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Kategória služby</p>
+                            <p class="card-text" id="provider-category">-</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Lokalita</p>
+                            <p class="card-text" id="provider-location">-</p>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="card-text" style="margin-bottom: 0.5rem; color: var(--text-gray);">Tarifa:</p>
+                        <span class="provider-badge badge-basic" id="provider-plan">Basic</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Card -->
+            <div class="card mb-4">
+                <h2 class="card-title" style="margin-bottom: 1.5rem;">Kontaktné údaje</h2>
+                <div class="grid grid-2">
+                    <div>
+                        <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Email</p>
+                        <p class="card-text" id="provider-email">-</p>
+                    </div>
+                    <div>
+                        <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Telefón</p>
+                        <p class="card-text" id="provider-phone">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Grid -->
+            <div class="grid grid-3 mb-4">
+                <div class="card text-center">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary-blue);" id="views-count">0
+                    </div>
+                    <p class="card-text">Zobrazení profilu</p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary-blue);" id="contacts-count">0
+                    </div>
+                    <p class="card-text">Kontaktov</p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary-blue);" id="rating">0.0</div>
+                    <p class="card-text">Hodnotenie</p>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-2 mt-4">
+                <a href="edit-profile.html" class="btn btn-primary" style="padding: 1.5rem; font-size: 1.125rem;">
+                    ✏️ Upraviť profil
+                </a>
+                <a href="plan-settings.html" class="btn btn-secondary" style="padding: 1.5rem; font-size: 1.125rem;">
+                    ⚙️ Nastavenia plánu
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/providers-data.js"></script>
+    <script src="js/auth-header.js"></script>
+    <script src="js/provider-dashboard.js"></script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>

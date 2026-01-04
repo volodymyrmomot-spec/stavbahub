@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stavbahub - Nájdite majstra vo vašom regióne</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Nájdite majstra vo vašom regióne</h1>
+            <p>Jednoducho, rýchlo a spoľahlivo</p>
+
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <form class="search-form" action="providers.html" method="GET">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <select name="region" class="form-select" required>
+                            <option value="">Vyberte kraj</option>
+                            <option value="Bratislavský">Bratislavský kraj</option>
+                            <option value="Trnavský">Trnavský kraj</option>
+                            <option value="Trenčiansky">Trenčiansky kraj</option>
+                            <option value="Nitriansky">Nitriansky kraj</option>
+                            <option value="Žilinský">Žilinský kraj</option>
+                            <option value="Banskobystrický">Banskobystrický kraj</option>
+                            <option value="Prešovský">Prešovský kraj</option>
+                            <option value="Košický">Košický kraj</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <select name="category" class="form-select" required>
+                            <option value="">Vyberte kategóriu</option>
+                            <option value="construction">Stavba a rekonštrukcia</option>
+                            <option value="interior">Interiér a nábytok</option>
+                            <option value="garden">Záhrada a exteriér</option>
+                            <option value="wellness">Wellness a relax</option>
+                            <option value="smart-home">Smart Home</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Hľadať</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Marketplace Section -->
+    <section class="section marketplace-section">
+        <div class="container">
+            <h2 class="section-title">Naši majstri</h2>
+            <p class="section-subtitle">Nájdite si overených poskytovateľov služieb</p>
+
+            <!-- Filters -->
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="cityFilter">Mesto</label>
+                    <select id="cityFilter" class="form-select">
+                        <option value="">Všetky mestá</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="categoryFilter">Kategória</label>
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">Všetky kategórie</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="searchInput">Hľadať</label>
+                    <input type="text" id="searchInput" class="form-input" placeholder="Zadajte názov alebo službu...">
+                </div>
+            </div>
+
+            <!-- Providers List -->
+            <div id="providersList" class="providers-grid">
+                <div class="loading">Načítavam...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="section" style="background-color: var(--background-white);">
+        <div class="container">
+            <h2 class="section-title">Ako to funguje</h2>
+            <div class="grid grid-3">
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                    <h3 class="card-title">1. Vyhľadajte</h3>
+                    <p class="card-text">Vyberte si kraj a typ služby, ktorú potrebujete</p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">👤</div>
+                    <h3 class="card-title">2. Porovnajte</h3>
+                    <p class="card-text">Prezrite si profily majstrov a ich hodnotenia</p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                    <h3 class="card-title">3. Kontaktujte</h3>
+                    <p class="card-text">Spojte sa s vybratým majstrom a dohodnite si prácu</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section">
+        <div class="container text-center">
+            <div class="card" style="max-width: 600px; margin: 0 auto; padding: 3rem;">
+                <h2 class="card-title" style="font-size: 2rem;">Ste majster?</h2>
+                <p class="card-text" style="font-size: 1.125rem; margin-bottom: 2rem;">
+                    Zaregistrujte sa a získajte prístup k tisíckam zákazníkov
+                </p>
+                <a href="register-firm.html" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.125rem;">
+                    Zaregistrovať sa
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <a href="https://www.instagram.com/stavbahub?igsh=MTZld2lpeGU1Y2o4OA%3D%3D&utm_source=qr" target="_blank"
+                class="footer-link">Follow us on Instagram</a>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/providers-data.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/back-button.js"></script>
+    <script src="js/homepage.js"></script>
+</body>
+
+</html>

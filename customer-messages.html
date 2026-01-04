@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moje správy - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <main>
+        <section class="messages-dashboard">
+            <div class="container">
+                <h1 class="section-title">Moje správy</h1>
+
+                <div id="conversations-list" class="conversations-list">
+                    <!-- Conversations will be loaded here -->
+                    <p class="loading-text">Načítavam konverzácie...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">&copy; 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <script src="js/auth-state.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>

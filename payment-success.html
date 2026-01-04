@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platba úspešná - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .success-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid var(--primary-blue);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <!-- Success Content -->
+    <section class="section">
+        <div class="container">
+            <div class="success-container">
+                <div id="loading-state">
+                    <div class="loading-spinner"></div>
+                    <h2>Overujeme vašu platbu...</h2>
+                    <p style="color: var(--text-gray);">Prosím počkajte, spracovávame vašu registráciu.</p>
+                </div>
+
+                <div id="success-state" style="display: none;">
+                    <div class="success-icon">✅</div>
+                    <h1 class="section-title">Platba úspešná!</h1>
+                    <div class="card" style="text-align: left; margin-top: 2rem;">
+                        <h3 class="card-title">Váš účet bol úspešne aktivovaný</h3>
+                        <p class="card-text">Ďakujeme za registráciu. Váš <strong id="plan-name"></strong> plán je teraz
+                            aktívny.</p>
+
+                        <div
+                            style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                            <p style="margin-bottom: 0.5rem;"><strong>Čo môžete robiť ďalej:</strong></p>
+                            <ul style="margin-left: 1.5rem; color: var(--text-gray);">
+                                <li>Upraviť svoj profil a pridať fotografie</li>
+                                <li>Nahrať galériu vašich prác</li>
+                                <li>Začať prijímať objednávky od zákazníkov</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                            <a href="dashboard.html" class="btn btn-primary" style="width: 100%;">Prejsť na
+                                Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="error-state" style="display: none;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+                    <h1 class="section-title">Chyba pri overovaní platby</h1>
+                    <div class="card" style="text-align: left; margin-top: 2rem;">
+                        <p class="card-text" id="error-message">Nepodarilo sa overiť vašu platbu. Prosím kontaktujte
+                            podporu.</p>
+                        <div style="margin-top: 2rem;">
+                            <a href="register-firm.html" class="btn btn-outline" style="width: 100%;">Späť na
+                                registráciu</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <script src="js/auth-state.js"></script>
+    <script src="js/payment-success.js"></script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>

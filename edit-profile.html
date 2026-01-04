@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upraviť profil - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <!-- Edit Profile Form -->
+    <section class="section">
+        <div class="container">
+            <h1 class="section-title">Upraviť profil</h1>
+
+            <!-- Current Plan Info -->
+            <div class="alert alert-info mb-4">
+                <strong>Váš aktuálny plán:</strong> <span id="current-plan-display">Basic</span>
+                <a href="plan-settings.html"
+                    style="color: var(--primary-blue); font-weight: 600; margin-left: 1rem;">Zmeniť plán</a>
+            </div>
+
+            <div class="card">
+                <form id="edit-profile-form">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Názov firmy *</label>
+                            <input type="text" name="company-name" id="company-name" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Kraj *</label>
+                            <select name="region" id="region" class="form-select" required>
+                                <option value="">Vyberte kraj</option>
+                                <option value="Bratislavský">Bratislavský kraj</option>
+                                <option value="Trnavský">Trnavský kraj</option>
+                                <option value="Trenčiansky">Trenčiansky kraj</option>
+                                <option value="Nitriansky">Nitriansky kraj</option>
+                                <option value="Žilinský">Žilinský kraj</option>
+                                <option value="Banskobystrický">Banskobystrický kraj</option>
+                                <option value="Prešovský">Prešovský kraj</option>
+                                <option value="Košický">Košický kraj</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Kategória služby *</label>
+                        <select name="category" id="category" class="form-select" required>
+                            <option value="">Vyberte kategóriu</option>
+                            <option value="construction">Stavba a rekonštrukcia</option>
+                            <option value="interior">Interiér a nábytok</option>
+                            <option value="garden">Záhrada a exteriér</option>
+                            <option value="wellness">Wellness a relax</option>
+                            <option value="smart-home">Smart Home</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Popis služieb</label>
+                        <textarea name="description" id="service-description" class="form-textarea" rows="5"></textarea>
+                    </div>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Telefón</label>
+                            <input type="tel" name="phone" id="phone" class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Webstránka</label>
+                            <input type="text" name="website" id="website" class="form-input"
+                                placeholder="napr. stavbahub.sk">
+                        </div>
+                    </div>
+
+                    <!-- Profile Photo Section -->
+                    <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+                        <h3 class="card-title">Profilová fotka</h3>
+                        <div class="grid grid-2" style="align-items: center;">
+                            <div class="form-group">
+                                <label class="form-label">Nahrať novú fotku</label>
+                                <input type="file" id="profile-photo-file" class="form-input"
+                                    accept="image/jpeg, image/png, image/webp">
+                                <small style="color: var(--text-gray); display: block; margin-top: 0.5rem;">
+                                    Podporované formáty: JPG, PNG, WEBP (max 5MB)
+                                </small>
+                            </div>
+                            <div id="photo-preview" style="display: none; text-align: center;">
+                                <label class="form-label">Náhľad</label>
+                                <div
+                                    style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto; background: #f3f4f6; border: 1px solid #e5e7eb;">
+                                    <img id="photo-preview-img" src="" alt="Náhľad"
+                                        style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Upload Section (Pro/Pro+ only) -->
+                    <div id="gallery-upload-section"
+                        style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+                        <h3 class="card-title">Galéria prác</h3>
+                        <p class="card-text mb-3">Môžete nahrať max. <span id="max-photos-display">0</span> fotografií
+                        </p>
+
+                        <!-- Current Photos -->
+                        <div id="current-photos-grid" class="gallery-grid mb-3">
+                            <!-- Photos will be loaded here -->
+                        </div>
+
+                        <!-- Upload Button -->
+                        <div class="form-group">
+                            <label class="form-label">Pridať fotografie</label>
+                            <input type="file" id="photo-upload" accept="image/*" multiple class="form-input">
+                            <small style="color: var(--text-gray); display: block; margin-top: 0.5rem;">
+                                Podporované formáty: JPG, PNG, WEBP (max 5MB každá)
+                            </small>
+                        </div>
+
+                        <div id="upload-error" class="alert alert-error" style="display: none;"></div>
+                    </div>
+
+                    <!-- Basic Plan Message -->
+                    <div id="gallery-basic-message"
+                        style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+                        <div class="alert alert-info">
+                            <strong>Galéria prác</strong> je dostupná iba pre plány Pro a Pro+.
+                            <a href="plan-settings.html"
+                                style="color: var(--primary-blue); font-weight: 600;">Upgradovať plán</a>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="grid grid-2 mt-4">
+                        <a href="dashboard.html" class="btn btn-outline">Zrušiť</a>
+                        <button type="submit" class="btn btn-primary">Uložiť zmeny</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <script src="js/auth-state.js"></script>
+    <script src="js/provider-profile-edit.js"></script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>

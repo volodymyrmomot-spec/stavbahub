@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platba zrušená - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .cancel-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .cancel-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <!-- Cancel Content -->
+    <section class="section">
+        <div class="container">
+            <div class="cancel-container">
+                <div class="cancel-icon">⚠️</div>
+                <h1 class="section-title">Platba nebola dokončená</h1>
+
+                <div class="card" style="text-align: left; margin-top: 2rem;">
+                    <p class="card-text">Vaša platba nebola dokončená. Registrácia pre plány Pro a Pro+ vyžaduje úspešnú
+                        platbu.</p>
+
+                    <div class="alert alert-info" style="margin-top: 1.5rem;">
+                        <strong>Čo môžete urobiť:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>Skúsiť platbu znova</li>
+                            <li>Vybrať plán Basic (zadarmo)</li>
+                            <li>Kontaktovať podporu</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-direction: column;">
+                        <button onclick="retryPayment()" class="btn btn-primary">Skúsiť znova</button>
+                        <a href="register-firm.html" class="btn btn-outline">Späť na registráciu</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <script src="js/auth-state.js"></script>
+    <script>
+        function retryPayment() {
+            // Get stored registration data
+            const registrationData = sessionStorage.getItem('pendingRegistration');
+
+            if (registrationData) {
+                // Redirect back to registration with data
+                window.location.href = 'register-firm.html?retry=1';
+            } else {
+                // No stored data, just go to registration
+                window.location.href = 'register-firm.html';
+            }
+        }
+    </script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>

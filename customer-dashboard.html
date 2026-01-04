@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Môj účet - Stavbahub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <!-- Customer Dashboard -->
+    <section class="section">
+        <div class="container">
+            <h1 class="section-title">Môj účet</h1>
+
+            <!-- Personal Info Card -->
+            <div class="card mb-4">
+                <h2 class="card-title">Osobné údaje</h2>
+                <div class="grid grid-2">
+                    <div>
+                        <div style="margin-bottom: 1rem;">
+                            <label
+                                style="display: block; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-gray);">Meno</label>
+                            <p id="customer-name" style="font-size: 1.125rem; font-weight: 600;">Načítavam...</p>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label
+                                style="display: block; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-gray);">Email</label>
+                            <p id="customer-email" style="font-size: 1.125rem;">Načítavam...</p>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label
+                                style="display: block; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-gray);">Telefón</label>
+                            <p id="customer-phone" style="font-size: 1.125rem;">Načítavam...</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <div style="text-align: center;">
+                            <div
+                                style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; margin: 0 auto 1rem;">
+                                👤
+                            </div>
+                            <button class="btn btn-secondary" id="edit-profile-btn" style="width: 100%;">Upraviť
+                                profil</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Section -->
+            <div class="card mb-4">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 class="card-title" style="margin: 0;">Moje správy</h2>
+                    <a href="chats.html" class="btn btn-primary">Zobraziť všetky</a>
+                </div>
+                <div id="messages-preview">
+                    <p style="color: var(--text-gray); text-align: center; padding: 2rem;">
+                        Tu budú vaše konverzácie s majstrami.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Requests/Orders Section -->
+            <div class="card mb-4">
+                <h2 class="card-title">Moje dopyty</h2>
+                <p style="color: var(--text-gray); text-align: center; padding: 2rem;">
+                    Táto sekcia bude zobrazovať vaše dopyty na majstrov.
+                </p>
+                <div style="text-align: center;">
+                    <a href="providers.html" class="btn btn-primary">Nájsť majstra</a>
+                </div>
+            </div>
+
+            <!-- Account Info -->
+            <div class="card">
+                <h2 class="card-title">Informácie o účte</h2>
+                <div class="grid grid-2">
+                    <div>
+                        <p style="color: var(--text-gray); margin-bottom: 0.5rem;">Typ účtu</p>
+                        <p style="font-weight: 600;">Zákazník</p>
+                    </div>
+                    <div>
+                        <p style="color: var(--text-gray); margin-bottom: 0.5rem;">Člen od</p>
+                        <p style="font-weight: 600;" id="member-since">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">Stavbahub</div>
+            <p class="copyright">© 2024 Stavbahub. Všetky práva vyhradené.</p>
+        </div>
+    </footer>
+
+    <script src="js/chat-manager.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/customer-dashboard.js"></script>
+    <script src="js/back-button.js"></script>
+</body>
+
+</html>
