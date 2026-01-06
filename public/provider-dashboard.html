@@ -33,6 +33,12 @@
         <div class="container">
             <h1 class="section-title">Môj profil</h1>
 
+            <!-- Description Card -->
+            <div class="card mb-4">
+                <h2 class="card-title" style="margin-bottom: 1rem;">O nás</h2>
+                <p class="card-text" id="provider-description">Načítavam...</p>
+            </div>
+
             <!-- Basic Information Card -->
             <div class="card mb-4">
                 <h2 class="card-title" style="margin-bottom: 1.5rem;">Základné informácie</h2>
@@ -47,7 +53,7 @@
                             <p class="card-text" id="provider-category">-</p>
                         </div>
                         <div>
-                            <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Lokalita</p>
+                            <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Lokalita / Región</p>
                             <p class="card-text" id="provider-location">-</p>
                         </div>
                     </div>
@@ -70,6 +76,10 @@
                         <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Telefón</p>
                         <p class="card-text" id="provider-phone">-</p>
                     </div>
+                    <div>
+                        <p style="color: var(--text-gray); margin-bottom: 0.25rem;">Webstránka</p>
+                        <p class="card-text" id="provider-website">-</p>
+                    </div>
                 </div>
             </div>
 
@@ -88,6 +98,22 @@
                 <div class="card text-center">
                     <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary-blue);" id="rating">0.0</div>
                     <p class="card-text">Hodnotenie</p>
+                </div>
+            </div>
+
+            <!-- Gallery Section -->
+            <div class="card mb-4" id="gallery-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 class="card-title">Galéria prác</h2>
+                    <span style="color: var(--text-gray); font-size: 0.9rem;">
+                        <span id="photo-count">0</span> / <span id="photo-limit">0</span>
+                    </span>
+                </div>
+                <div id="no-photos-message" style="text-align: center; padding: 2rem; background: #f9fafb; border-radius: 8px; color: var(--text-gray);">
+                    Zatiaľ žiadne fotky.
+                </div>
+                <div id="gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+                    <!-- Photos inserted by JS -->
                 </div>
             </div>
 

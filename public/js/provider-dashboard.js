@@ -150,66 +150,72 @@
         // Get user data from localStorage for email (since Provider model doesn't have email)
         const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+        // Helper to safely set text content
+        const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text || '-';
+        };
+
         // Update provider name (Provider model uses 'name' not 'companyName')
-        document.getElementById('provider-name').textContent = provider.name || 'Bez názvu';
+        setText('provider-name', provider.name || 'Bez názvu');
 
         // Update category (Provider model uses 'categories' array)
         const categoryText = provider.categories && provider.categories.length > 0
             ? provider.categories.join(', ')
             : '-';
-        document.getElementById('provider-category').textContent = categoryText;
+        setText('provider-category', categoryText);
 
-        // Update location (Provider model has 'city', no 'region' field)
+        // Update location: City + Region
         const locationElement = document.getElementById('provider-location');
         if (locationElement) {
-            locationElement.textContent = provider.city || '-';
+            let loc = provider.city || '';
+            if (provider.region) {
+                loc = loc ? `${loc} (${provider.region})` : provider.region;
+            }
+            locationElement.textContent = loc || '-';
         }
 
         // Update plan badge
         const planBadge = document.getElementById('provider-plan');
-        const plan = (provider.plan || 'basic').toLowerCase();
-
-        // Normalize all plan value variations
-        if (plan === 'pro+' || plan === 'proplus' || plan === 'pro-plus' || plan === 'pro_plus') {
-            planBadge.textContent = 'Pro+';
-            planBadge.className = 'provider-badge badge-pro-plus';
-        } else if (plan === 'pro') {
-            planBadge.textContent = 'Pro';
-            planBadge.className = 'provider-badge badge-pro';
-        } else {
-            planBadge.textContent = 'Basic';
-            planBadge.className = 'provider-badge badge-basic';
+        if (planBadge) {
+            const plan = (provider.plan || 'basic').toLowerCase();
+            if (plan === 'pro+' || plan === 'proplus' || plan === 'pro-plus' || plan === 'pro_plus') {
+                planBadge.textContent = 'Pro+';
+                planBadge.className = 'provider-badge badge-pro-plus';
+            } else if (plan === 'pro') {
+                planBadge.textContent = 'Pro';
+                planBadge.className = 'provider-badge badge-pro';
+            } else {
+                planBadge.textContent = 'Basic';
+                planBadge.className = 'provider-badge badge-basic';
+            }
         }
 
-        // Update Contact Info (email comes from User model, not Provider)
-        const phoneElement = document.getElementById('provider-phone');
-        if (phoneElement) {
-            phoneElement.textContent = provider.phone || '-';
-        }
-
-        const emailElement = document.getElementById('provider-email');
-        if (emailElement) {
-            emailElement.textContent = user.email || '-';
-        }
+        // Update Contact Info
+        setText('provider-phone', provider.phone);
+        setText('provider-email', user.email);
 
         const websiteElement = document.getElementById('provider-website');
-        if (provider.website && provider.website.trim() !== '') {
-            let websiteUrl = provider.website.trim();
-            if (!websiteUrl.match(/^https?:\/\//i)) {
-                websiteUrl = 'https://' + websiteUrl;
+        if (websiteElement) {
+            if (provider.website && provider.website.trim() !== '') {
+                let websiteUrl = provider.website.trim();
+                if (!websiteUrl.match(/^https?:\/\//i)) {
+                    websiteUrl = 'https://' + websiteUrl;
+                }
+                websiteElement.innerHTML = `<a href="${websiteUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: none; word-break: break-all;">${provider.website}</a>`;
+            } else {
+                websiteElement.textContent = '-';
             }
-            websiteElement.innerHTML = `<a href="${websiteUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-blue); text-decoration: none; word-break: break-all;">${provider.website}</a>`;
-        } else {
-            websiteElement.textContent = '-';
         }
 
         // Update Description
-        document.getElementById('provider-description').textContent = provider.description || 'Žiadny popis.';
+        setText('provider-description', provider.description || 'Žiadny popis.');
 
         // Update stats
-        document.getElementById('views-count').textContent = provider.views || 0;
-        document.getElementById('contacts-count').textContent = provider.contacts || 0;
-        document.getElementById('rating').textContent = (provider.rating || 0).toFixed(1);
+        setText('views-count', provider.views || 0);
+        setText('contacts-count', provider.contacts || 0);
+        const ratingEl = document.getElementById('rating');
+        if (ratingEl) ratingEl.textContent = (provider.rating || 0).toFixed(1);
 
         // Update Gallery (Pro/Pro+ only)
         const gallerySection = document.getElementById('gallery-section');
@@ -218,33 +224,35 @@
         const photoCount = document.getElementById('photo-count');
         const photoLimit = document.getElementById('photo-limit');
 
-        if (plan === 'basic') {
-            gallerySection.style.display = 'none';
-        } else {
-            gallerySection.style.display = 'block';
-            const maxPhotos = plan === 'pro' ? 3 : 30;
-            photoLimit.textContent = maxPhotos;
+        if (gallerySection && galleryGrid) {
+            const plan = (provider.plan || 'basic').toLowerCase();
 
-            // Use workPhotos or photos array (excluding profile photo if mixed, but usually separate)
-            // Assuming verification_docs are separate.
-            // Let's use 'photos' from the backend structure if 'workPhotos' is not there.
-            const photos = provider.workPhotos || provider.photos || [];
-            photoCount.textContent = photos.length;
-
-            if (photos.length > 0) {
-                galleryGrid.innerHTML = '';
-                noPhotosMessage.style.display = 'none';
-
-                photos.forEach((photo, index) => {
-                    const photoItem = document.createElement('div');
-                    photoItem.className = 'gallery-item';
-                    photoItem.style.cssText = 'position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 8px; background: #f3f4f6;';
-                    photoItem.innerHTML = `<img src="${photo}" alt="Realizácia ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;">`;
-                    galleryGrid.appendChild(photoItem);
-                });
+            if (plan === 'basic') {
+                gallerySection.style.display = 'none';
             } else {
-                galleryGrid.innerHTML = '';
-                noPhotosMessage.style.display = 'block';
+                gallerySection.style.display = 'block';
+                const maxPhotos = plan === 'pro' ? 3 : 30;
+                if (photoLimit) photoLimit.textContent = maxPhotos;
+
+                // Use workPhotos or photos array
+                const photos = provider.workPhotos || provider.photos || [];
+                if (photoCount) photoCount.textContent = photos.length;
+
+                if (photos.length > 0) {
+                    galleryGrid.innerHTML = '';
+                    if (noPhotosMessage) noPhotosMessage.style.display = 'none';
+
+                    photos.forEach((photo, index) => {
+                        const photoItem = document.createElement('div');
+                        photoItem.className = 'gallery-item';
+                        photoItem.style.cssText = 'position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 8px; background: #f3f4f6;';
+                        photoItem.innerHTML = `<img src="${photo}" alt="Realizácia ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        galleryGrid.appendChild(photoItem);
+                    });
+                } else {
+                    galleryGrid.innerHTML = '';
+                    if (noPhotosMessage) noPhotosMessage.style.display = 'block';
+                }
             }
         }
     }
