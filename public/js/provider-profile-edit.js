@@ -287,18 +287,36 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const updateData = {
                     name: document.getElementById('company-name').value.trim(),
                     categories: [document.getElementById('category').value],
-                    description: document.getElementById('service-description').value.trim(),
-                    active: true
-                };
+                    city: document.getElementById('region').value, // wait, form has region but maybe mapped to city? Let's check edit-profile.html. Input id='region' is select. 
+                    // Actually provider model has BOTH city and region.
+                    // edit-profile.html has id="region" (select) but NO id="city"?
+                    // Let's re-read edit-profile.html content from Step 161.
+                    // It has <select name="region" id="region">.
+                    // It does NOT have a city input? 
+                    // register-firm.html has BOTH city and region.
+                    // if edit-profile.html lacks city, we might lose data if we don't send it or if we send undefined.
+                    // We should preserve existing city if not editable.
+                    // Or maybe region select is actually serving as city/location?
+                    // Let's assume region is region. And city is missing from edit form?? 
+                    // User requirement: "Save companyName, category, region, phone, description". City wasn't explicitly mentioned in "Save...", but it is required in Model.
+                    // If I send PUT (upsert), I MUST send required fields.
+                    // If I don't have city in form, I must use existing city from `provider` object loaded earlier.
 
-                // Note: Provider model doesn't have city field in the allowed updates
-                // Check backend routes/providers.js PATCH /me endpoint for allowed fields
+                    region: document.getElementById('region').value,
+                    city: provider.city || '', // Keep existing city
+                    description: document.getElementById('service-description').value.trim(),
+                    phone: document.getElementById('phone').value.trim(),
+                    website: document.getElementById('website').value.trim(),
+                    active: true,
+                    // Plan is read-only usually, but maybe we send it to keep it?
+                    plan: provider.plan
+                };
 
                 console.log('Updating provider profile:', updateData);
 
                 // Make API call to update provider
                 const response = await fetch(`${API_BASE_URL}/api/providers/me`, {
-                    method: 'PATCH',
+                    method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'

@@ -27,6 +27,22 @@ const providerSchema = new mongoose.Schema(
       required: true
     },
 
+    region: {
+      type: String
+    },
+
+    phone: {
+      type: String
+    },
+
+    website: {
+      type: String
+    },
+
+    profilePhoto: {
+      type: String
+    },
+
     description: {
       type: String
     },
@@ -38,7 +54,7 @@ const providerSchema = new mongoose.Schema(
 
     plan: {
       type: String,
-      enum: ['basic', 'pro', 'pro+'],
+      enum: ['basic', 'pro', 'pro+', 'pro_plus', 'proplus'], // expanded generic enum support
       default: 'basic'
     },
 

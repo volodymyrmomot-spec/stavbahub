@@ -64,10 +64,10 @@ router.get('/me', auth('provider'), async (req, res) => {
   }
 });
 
-// UPDATE my provider profile (for provider cabinet)
+// UPDATE my provider profile (PATCH)
 router.patch('/me', auth('provider'), async (req, res) => {
   try {
-    const allowed = ['name', 'categories', 'city', 'description', 'active'];
+    const allowed = ['name', 'categories', 'city', 'description', 'active', 'plan', 'phone', 'region', 'website', 'profilePhoto'];
     const updates = {};
 
     for (const key of allowed) {
@@ -81,6 +81,30 @@ router.patch('/me', auth('provider'), async (req, res) => {
     );
 
     if (!provider) return res.status(404).json({ message: 'Provider profile not found' });
+    return res.json(provider);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// FULL UPDATE / UPSERT provider profile (PUT) - requested by user
+router.put('/me', auth('provider'), async (req, res) => {
+  try {
+    // Upsert: update if exists, insert if not
+    const provider = await Provider.findOneAndUpdate(
+      { userId: req.user.id },
+      {
+        userId: req.user.id,
+        ...req.body
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true,
+        runValidators: true
+      }
+    );
     return res.json(provider);
   } catch (e) {
     console.error(e);

@@ -101,10 +101,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         name: data.companyName,  // Provider model uses 'name'
                         categories: [data.category],  // Provider model uses 'categories' array
                         city: data.city,
+                        region: data.region,
+                        phone: data.phone,
                         plan: data.plan,
                         description: data.description || '',
-                        // Note: Provider model doesn't have phone, region, or photo fields
-                        // These would need to be added to the backend model if required
+                        active: true
                     };
 
                     const providerRes = await fetch(`${API_BASE_URL}/api/providers`, {
