@@ -20,7 +20,7 @@
 
             if (filters.plan && filters.plan.trim() !== '') params.append('plan', filters.plan);
 
-            const url = `${API_BASE_URL}/api/providers?${params.toString()}`;
+            const url = `/api/providers?${params.toString()}`;
             console.log('Fetching providers from:', url);
 
             fetch(url)

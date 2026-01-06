@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     let uploadedPhotoData = null; // Store uploaded photo data
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/providers/me`, {
+        const response = await fetch(`/api/providers/me`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 console.log('Updating provider profile:', updateData);
 
                 // Make API call to update provider
-                const response = await fetch(`${API_BASE_URL}/api/providers/me`, {
+                const response = await fetch(`/api/providers/me`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,

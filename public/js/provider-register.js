@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 role: 'provider'
             };
 
-            const registerUrl = `${API_BASE_URL}/api/auth/register`;
+            const registerUrl = `/api/auth/register`;
             const authRes = await fetch(registerUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         active: true
                     };
 
-                    const providerRes = await fetch(`${API_BASE_URL}/api/providers`, {
+                    const providerRes = await fetch(`/api/providers`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

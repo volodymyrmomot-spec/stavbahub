@@ -46,7 +46,7 @@
                 // Reviewing backend `routes/providers.js` didn't show billing session. It's likely in another file.
                 // But let's send what we have.
 
-                const response = await fetch(`${API_BASE_URL}/api/create-billing-portal-session`, {
+                const response = await fetch(`/api/create-billing-portal-session`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -94,7 +94,7 @@
 
         try {
             // Fetch from Backend API using /me endpoint with JWT
-            const response = await fetch(`${API_BASE_URL}/api/providers/me`, {
+            const response = await fetch(`/api/providers/me`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     try {
         // Fetch Stripe Config (optional - don't fail if missing)
         try {
-            const configRes = await fetch(`${API_BASE_URL}/api/config`);
+            const configRes = await fetch(`/api/config`);
             if (configRes.ok) {
                 stripeConfig = await configRes.json();
             }
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         // Fetch Provider with JWT
-        const providerRes = await fetch(`${API_BASE_URL}/api/providers/me`, {
+        const providerRes = await fetch(`/api/providers/me`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             this.textContent = 'Načítavam...';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/create-billing-portal-session`, {
+                const response = await fetch(`/api/create-billing-portal-session`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!confirm('Naozaj chcete prejsť na plán Basic? Stratíte výhody vyššieho plánu.')) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/set-plan-basic`, {
+                const response = await fetch(`/api/set-plan-basic`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
+                const response = await fetch(`/api/create-checkout-session`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,

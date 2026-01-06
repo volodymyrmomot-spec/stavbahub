@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load filter options from API
 async function loadFilters() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/meta/filters`);
+        const response = await fetch(`/api/meta/filters`);
         const data = await response.json();
 
         populateSelect('cityFilter', data.cities, 'Všetky mestá');
@@ -53,7 +53,7 @@ async function loadProviders() {
         // We still ask backend for sorting, but we will enforce it client-side too
         params.append('sort', 'rating');
 
-        const response = await fetch(`${API_BASE_URL}/api/providers?${params.toString()}`);
+        const response = await fetch(`/api/providers?${params.toString()}`);
         allProviders = await response.json();
 
         // Client-side sorting enforcement: Plan > Rating
