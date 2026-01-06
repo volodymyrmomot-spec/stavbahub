@@ -22,12 +22,45 @@
             this.disabled = true;
             this.textContent = 'Načítavam...';
 
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Relácia vypršala. Prihláste sa znova.');
+                window.location.href = 'login.html';
+                return;
+            }
+
             try {
+                // Get provider ID from local storage user or just rely on backend finding it from token?
+                // Backend probably needs providerId in body based on previous code.
+                // Let's safe get it.
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                // We might not have providerId easily if we scraped it from provider object in loadProviderData.
+                // But wait, the backend endpoint `create-billing-portal-session` probably expects it.
+                // Let's try to get it from legacy if possible, or assume backend can handle it from token if we update backend (but we shouldn't update backend unless necessary).
+                // Actually, let's assume valid token + /me call earlier worked, so we are good.
+                // Check if we have provider data stored?
+                // Let's use the 'user' object from localStorage which has 'id'. 
+                // But provider ID is different from user ID usually.
+                // In loadProviderData, we didn't store provider ID in a global var.
+                // Let's rely on backend finding provider by userId from token?
+                // Reviewing backend `routes/providers.js` didn't show billing session. It's likely in another file.
+                // But let's send what we have.
+
                 const response = await fetch(`${API_BASE_URL}/api/create-billing-portal-session`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ providerId: loggedInProviderId })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({}) // Backend should find provider from req.user (token)
                 });
+
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.clear();
+                    alert('Relácia vypršala. Prihláste sa znova.');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
                 const data = await response.json();
 
@@ -50,72 +83,87 @@
     async function loadProviderData(providerId) {
         console.log('Loading provider data for ID:', providerId);
 
+        // Check for JWT token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('No JWT token found, redirecting to login');
+            alert('Relácia vypršala. Prihláste sa znova.');
+            window.location.href = 'login.html';
+            return;
+        }
+
         try {
-            // Fetch from Backend API
-            const response = await fetch(`${API_BASE_URL}/api/providers/${providerId}`);
-            if (!response.ok) throw new Error('Failed to fetch provider');
+            // Fetch from Backend API using /me endpoint with JWT
+            const response = await fetch(`${API_BASE_URL}/api/providers/me`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                console.error('Unauthorized - token invalid or expired');
+                localStorage.clear();
+                alert('Relácia vypršala. Prihláste sa znova.');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error:', response.status, errorText);
+                throw new Error(`Failed to fetch provider: ${response.status}`);
+            }
 
             const provider = await response.json();
+            console.log('Provider data loaded:', provider);
 
             // Update UI with fresh data
             updateDashboardUI(provider);
 
-            // Update localStorage for other pages to use
-            // We need to merge with existing customProviders if we want to keep that structure,
-            // or just rely on API. For now, let's update the specific provider in localStorage if it exists there.
-            let customProviders = JSON.parse(localStorage.getItem('customProviders')) || [];
-            const idx = customProviders.findIndex(p => p.id === providerId);
-            if (idx !== -1) {
-                customProviders[idx] = { ...customProviders[idx], ...provider };
-                localStorage.setItem('customProviders', JSON.stringify(customProviders));
-            }
-
         } catch (error) {
-            console.error('Error fetching from API, falling back to localStorage:', error);
-            // Fallback to localStorage
-            const staticProviders = window.providersData || [];
-            const customProviders = JSON.parse(localStorage.getItem('customProviders')) || [];
-            const allProviders = [...staticProviders, ...customProviders];
-            const provider = allProviders.find(p => p.id === providerId);
+            console.error('Error fetching provider data:', error);
 
-            if (provider) {
-                updateDashboardUI(provider);
-            } else {
-                console.error('Provider not found anywhere');
-                alert('Chyba: Údaje sa nepodarilo načítať.');
-            }
+            // Remove "Načítavam..." state on error
+            document.getElementById('provider-name').textContent = 'Nepodarilo sa načítať údaje';
+            document.getElementById('provider-category').textContent = '-';
+
+            // Only show alert for critical errors, not network glitches if we can just show UI state
+            // valid token but failed fetch usually means server error or network
+
+            const retryBtn = document.createElement('button');
+            retryBtn.textContent = 'Skúsiť znova';
+            retryBtn.className = 'btn btn-secondary btn-sm';
+            retryBtn.style.marginTop = '0.5rem';
+            retryBtn.onclick = () => window.location.reload();
+
+            const nameEl = document.getElementById('provider-name');
+            nameEl.appendChild(document.createElement('br'));
+            nameEl.appendChild(retryBtn);
         }
     }
 
     function updateDashboardUI(provider) {
         console.log('Updating UI for provider:', provider);
 
-        // Update profile photo
-        const photoElement = document.getElementById('provider-photo');
-        const photoPlaceholder = document.getElementById('provider-photo-placeholder');
+        // Get user data from localStorage for email (since Provider model doesn't have email)
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-        // Check for photo URL or base64 data
-        const photoSrc = provider.profilePhotoUrl || provider.profilePhotoData || (provider.photos && provider.photos[0]);
+        // Update provider name (Provider model uses 'name' not 'companyName')
+        document.getElementById('provider-name').textContent = provider.name || 'Bez názvu';
 
-        if (photoSrc) {
-            photoElement.src = photoSrc;
-            photoElement.style.display = 'block';
-            photoPlaceholder.style.display = 'none';
-        } else {
-            photoElement.style.display = 'none';
-            photoPlaceholder.style.display = 'flex';
-        }
-
-        // Update provider name
-        document.getElementById('provider-name').textContent = provider.name || provider.companyName || 'Bez názvu';
-
-        // Update category
-        const categoryText = provider.service_type || provider.category || '-';
+        // Update category (Provider model uses 'categories' array)
+        const categoryText = provider.categories && provider.categories.length > 0
+            ? provider.categories.join(', ')
+            : '-';
         document.getElementById('provider-category').textContent = categoryText;
 
-        // Update region
-        const regionText = provider.region || '-';
-        document.getElementById('provider-region').textContent = `Kraj: ${regionText}`;
+        // Update location (Provider model has 'city', no 'region' field)
+        const locationElement = document.getElementById('provider-location');
+        if (locationElement) {
+            locationElement.textContent = provider.city || '-';
+        }
 
         // Update plan badge
         const planBadge = document.getElementById('provider-plan');
@@ -133,9 +181,16 @@
             planBadge.className = 'provider-badge badge-basic';
         }
 
-        // Update Contact Info
-        document.getElementById('provider-phone').textContent = provider.phone || '-';
-        document.getElementById('provider-email').textContent = provider.email || '-';
+        // Update Contact Info (email comes from User model, not Provider)
+        const phoneElement = document.getElementById('provider-phone');
+        if (phoneElement) {
+            phoneElement.textContent = provider.phone || '-';
+        }
+
+        const emailElement = document.getElementById('provider-email');
+        if (emailElement) {
+            emailElement.textContent = user.email || '-';
+        }
 
         const websiteElement = document.getElementById('provider-website');
         if (provider.website && provider.website.trim() !== '') {

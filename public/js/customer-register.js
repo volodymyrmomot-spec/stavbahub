@@ -75,7 +75,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const user = data.user || data.customer || data.provider; // adapt to whatever backend returns
 
             // Save to localStorage for session management
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+
             if (user) {
+                localStorage.setItem('user', JSON.stringify(user));
+
+                // Legacy keys for backward compatibility
                 localStorage.setItem('loggedInCustomerId', user.id);
                 localStorage.setItem('loggedInCustomer', JSON.stringify(user));
             }

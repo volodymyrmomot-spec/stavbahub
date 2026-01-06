@@ -1,53 +1,82 @@
-// Provider Plan Settings Script - Frontend Only
+// Provider Plan Settings Script - With JWT Authentication
 document.addEventListener('DOMContentLoaded', async function () {
     'use strict';
 
-    // 1. Check Authentication
-    const loggedInProviderId = localStorage.getItem('loggedInProviderId');
-
-    if (!loggedInProviderId) {
+    // ===================================================================
+    // JWT AUTHENTICATION - Check token first
+    // ===================================================================
+    const token = localStorage.getItem('token');
+    if (!token) {
+        alert('Relácia vypršala. Prihláste sa znova.');
         window.location.href = 'login.html';
         return;
     }
 
-    // 2. Load Config & Provider Data
+    // ===================================================================
+    // LOAD PROVIDER DATA FROM API
+    // ===================================================================
     let stripeConfig = null;
     let provider = null;
 
     try {
-        // Fetch Config
-        const configRes = await fetch(`${API_BASE_URL}/api/config`);
-        stripeConfig = await configRes.json();
-
-        // Fetch Provider
-        const providerRes = await fetch(`${API_BASE_URL}/api/providers/${loggedInProviderId}`);
-        if (providerRes.ok) {
-            provider = await providerRes.json();
-        } else {
-            console.error('Failed to fetch provider');
-        }
-    } catch (e) {
-        console.error('Error loading data', e);
-    }
-
-    if (!provider) {
-        // Fallback to localStorage if API fails (though API is preferred)
+        // Fetch Stripe Config (optional - don't fail if missing)
         try {
-            const customProviders = JSON.parse(localStorage.getItem('customProviders')) || [];
-            provider = customProviders.find(p => p.id === loggedInProviderId);
-        } catch (e) { }
+            const configRes = await fetch(`${API_BASE_URL}/api/config`);
+            if (configRes.ok) {
+                stripeConfig = await configRes.json();
+            }
+        } catch (e) {
+            console.warn('Stripe config not available:', e);
+        }
+
+        // Fetch Provider with JWT
+        const providerRes = await fetch(`${API_BASE_URL}/api/providers/me`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Handle 401/403 - token invalid/expired
+        if (providerRes.status === 401 || providerRes.status === 403) {
+            localStorage.clear();
+            alert('Relácia vypršala. Prihláste sa znova.');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // Handle other errors
+        if (!providerRes.ok) {
+            const errorText = await providerRes.text();
+            console.error('API Error:', providerRes.status, errorText);
+            alert('Chyba pri načítaní údajov. Skúste to znova.');
+            return;
+        }
+
+        provider = await providerRes.json();
+        console.log('Provider data loaded:', provider);
+
+    } catch (e) {
+        console.error('Error loading data:', e);
+        alert('Chyba pri načítaní údajov. Skontrolujte pripojenie.');
+        return;
     }
 
     if (!provider) {
         alert('Chyba: Údaje o firme sa nenašli.');
-        window.location.href = 'dashboard.html';
+        window.location.href = 'provider-dashboard.html';
         return;
     }
 
-    // 3. Display Current Plan
+    // ===================================================================
+    // DISPLAY CURRENT PLAN
+    // ===================================================================
     displayCurrentPlan(provider.plan || 'basic');
 
-    // 4. Handle Plan Selection Buttons
+    // ===================================================================
+    // HANDLE PLAN SELECTION BUTTONS
+    // ===================================================================
     const planButtons = document.querySelectorAll('.plan-select-btn');
     planButtons.forEach(button => {
         button.addEventListener('click', function () {
@@ -56,17 +85,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     });
 
-    // 5. Handle Logout Button
+    // ===================================================================
+    // HANDLE LOGOUT BUTTON
+    // ===================================================================
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            localStorage.removeItem('loggedInProviderId');
+            localStorage.clear();
             window.location.href = 'index.html';
         });
     }
 
-    // 6. Handle Manage Subscription Button (Pro/Pro+ only)
+    // ===================================================================
+    // HANDLE MANAGE SUBSCRIPTION BUTTON (Pro/Pro+ only)
+    // ===================================================================
     const manageSubscriptionSection = document.getElementById('manage-subscription-section');
     const manageSubscriptionBtn = document.getElementById('manage-subscription-btn');
 
@@ -86,9 +119,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/create-billing-portal-session`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ providerId: loggedInProviderId })
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ providerId: provider._id || provider.id })
                 });
+
+                // Handle 401/403
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.clear();
+                    alert('Relácia vypršala. Prihláste sa znova.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
                 const data = await response.json();
 
                 if (data.url) {
@@ -120,20 +165,26 @@ document.addEventListener('DOMContentLoaded', async function () {
         const normalizedPlan = plan.toLowerCase();
 
         if (normalizedPlan === 'pro+' || normalizedPlan === 'proplus' || normalizedPlan === 'pro-plus' || normalizedPlan === 'pro_plus') {
-            currentPlanName.textContent = 'Pro+';
-            currentPlanPrice.textContent = '39€/mes.';
-            currentPlanBadge.textContent = 'PRO+';
-            currentPlanBadge.className = 'provider-badge badge-pro-plus';
+            if (currentPlanName) currentPlanName.textContent = 'Pro+';
+            if (currentPlanPrice) currentPlanPrice.textContent = '39€/mes.';
+            if (currentPlanBadge) {
+                currentPlanBadge.textContent = 'PRO+';
+                currentPlanBadge.className = 'provider-badge badge-pro-plus';
+            }
         } else if (normalizedPlan === 'pro') {
-            currentPlanName.textContent = 'Pro';
-            currentPlanPrice.textContent = '19€/mes.';
-            currentPlanBadge.textContent = 'PRO';
-            currentPlanBadge.className = 'provider-badge badge-pro';
+            if (currentPlanName) currentPlanName.textContent = 'Pro';
+            if (currentPlanPrice) currentPlanPrice.textContent = '19€/mes.';
+            if (currentPlanBadge) {
+                currentPlanBadge.textContent = 'PRO';
+                currentPlanBadge.className = 'provider-badge badge-pro';
+            }
         } else {
-            currentPlanName.textContent = 'Basic';
-            currentPlanPrice.textContent = 'Zadarmo';
-            currentPlanBadge.textContent = 'BASIC';
-            currentPlanBadge.className = 'provider-badge badge-basic';
+            if (currentPlanName) currentPlanName.textContent = 'Basic';
+            if (currentPlanPrice) currentPlanPrice.textContent = 'Zadarmo';
+            if (currentPlanBadge) {
+                currentPlanBadge.textContent = 'BASIC';
+                currentPlanBadge.className = 'provider-badge badge-basic';
+            }
         }
     }
 
@@ -157,9 +208,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/set-plan-basic`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ providerId: loggedInProviderId })
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ providerId: provider._id || provider.id })
                 });
+
+                // Handle 401/403
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.clear();
+                    alert('Relácia vypršala. Prihláste sa znova.');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
                 if (response.ok) {
                     showMessage('Plán bol úspešne zmenený na Basic.', 'success');
@@ -191,12 +253,23 @@ document.addEventListener('DOMContentLoaded', async function () {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
                         priceId: priceId,
-                        providerId: loggedInProviderId
+                        providerId: provider._id || provider.id
                     })
                 });
+
+                // Handle 401/403
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.clear();
+                    alert('Relácia vypršala. Prihláste sa znova.');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
                 const data = await response.json();
 
@@ -209,20 +282,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 console.error(e);
                 showMessage('Chyba pri komunikácii so serverom.', 'error');
             }
-        }
-    }
-
-    /**
-     * Get display label for plan
-     */
-    function getPlanLabel(plan) {
-        const normalizedPlan = plan.toLowerCase();
-        if (normalizedPlan === 'pro+' || normalizedPlan === 'proplus' || normalizedPlan === 'pro-plus' || normalizedPlan === 'pro_plus') {
-            return 'Pro+';
-        } else if (normalizedPlan === 'pro') {
-            return 'Pro';
-        } else {
-            return 'Basic';
         }
     }
 

@@ -1,45 +1,88 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // 1. Check Authentication
-    const loggedInProviderId = localStorage.getItem('loggedInProviderId');
-
-    if (!loggedInProviderId) {
+document.addEventListener('DOMContentLoaded', async function () {
+    // ===================================================================
+    // JWT AUTHENTICATION - Check token first
+    // ===================================================================
+    const token = localStorage.getItem('token');
+    if (!token) {
+        alert('Relácia vypršala. Prihláste sa znova.');
         window.location.href = 'login.html';
         return;
     }
 
-    // 2. Load Provider Data
+    // ===================================================================
+    // LOAD PROVIDER DATA FROM API
+    // ===================================================================
     let provider = null;
     let uploadedPhotoData = null; // Store uploaded photo data
 
-    // Check custom providers in localStorage
     try {
-        const customProviders = JSON.parse(localStorage.getItem('customProviders')) || [];
-        provider = customProviders.find(p => p.id === loggedInProviderId);
-    } catch (e) {
-        console.error('Error reading custom providers', e);
-    }
+        const response = await fetch(`${API_BASE_URL}/api/providers/me`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
 
-    // 3. Pre-fill Form or Redirect if not found
-    if (!provider) {
-        alert('Chyba: Údaje o firme sa nenašli.');
-        window.location.href = 'dashboard.html';
+        // Handle 401/403 - token invalid/expired
+        if (response.status === 401 || response.status === 403) {
+            localStorage.clear();
+            alert('Relácia vypršala. Prihláste sa znova.');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // Handle other errors
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', response.status, errorText);
+            alert('Chyba pri načítaní údajov. Skúste to znova.');
+            return;
+        }
+
+        provider = await response.json();
+        console.log('Provider data loaded:', provider);
+
+    } catch (error) {
+        console.error('Error loading provider data:', error);
+        alert('Chyba pri načítaní údajov. Skontrolujte pripojenie.');
         return;
     }
 
-    // Pre-fill form fields
+    // Get user data for email (Provider model doesn't have email)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // ===================================================================
+    // PRE-FILL FORM
+    // ===================================================================
     document.getElementById('company-name').value = provider.name || '';
-    document.getElementById('region').value = provider.region || '';
-    document.getElementById('category').value = provider.category || provider.service_type || '';
+
+    // Provider model uses 'categories' array, form expects single category
+    const category = provider.categories && provider.categories.length > 0
+        ? provider.categories[0]
+        : '';
+    document.getElementById('category').value = category;
+
     document.getElementById('service-description').value = provider.description || '';
-    document.getElementById('phone').value = provider.phone || '';
-    // Remove https:// prefix when loading for editing
-    let websiteDisplay = provider.website || '';
-    if (websiteDisplay.startsWith('https://')) {
-        websiteDisplay = websiteDisplay.substring(8);
-    } else if (websiteDisplay.startsWith('http://')) {
-        websiteDisplay = websiteDisplay.substring(7);
+
+    // Note: Provider model doesn't have region, phone, website fields
+    // These fields won't be pre-filled or saved unless backend model is updated
+    const regionField = document.getElementById('region');
+    if (regionField) regionField.value = provider.region || '';
+
+    const phoneField = document.getElementById('phone');
+    if (phoneField) phoneField.value = provider.phone || '';
+
+    const websiteField = document.getElementById('website');
+    if (websiteField) {
+        let websiteDisplay = provider.website || '';
+        if (websiteDisplay.startsWith('https://')) {
+            websiteDisplay = websiteDisplay.substring(8);
+        } else if (websiteDisplay.startsWith('http://')) {
+            websiteDisplay = websiteDisplay.substring(7);
+        }
+        websiteField.value = websiteDisplay;
     }
-    document.getElementById('website').value = websiteDisplay;
 
     // Show existing photo if available
     const photoPreview = document.getElementById('photo-preview');
@@ -65,7 +108,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 4. Handle File Upload
+    // ===================================================================
+    // HANDLE FILE UPLOAD
+    // ===================================================================
     const fileInput = document.getElementById('profile-photo-file');
     if (fileInput) {
         fileInput.addEventListener('change', function (e) {
@@ -100,7 +145,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Gallery Management (Pro/Pro+ only)
+    // ===================================================================
+    // GALLERY MANAGEMENT (Pro/Pro+ only)
+    // ===================================================================
     let currentWorkPhotos = provider.workPhotos || [];
     const plan = (provider.plan || 'basic').toLowerCase();
     const gallerySection = document.getElementById('gallery-upload-section');
@@ -220,106 +267,92 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 5. Handle Form Submission
+    // ===================================================================
+    // HANDLE FORM SUBMISSION - UPDATE VIA API
+    // ===================================================================
     const editForm = document.getElementById('edit-profile-form');
     if (editForm) {
-        editForm.addEventListener('submit', function (e) {
+        editForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            // Format website URL - add https:// if missing
-            let websiteValue = document.getElementById('website').value.trim();
-            if (websiteValue && !websiteValue.match(/^https?:\/\//i)) {
-                websiteValue = 'https://' + websiteValue;
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn ? submitBtn.textContent : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Ukladám...';
             }
 
-            // Get form values - explicitly preserve critical fields
-            const updatedProvider = {
-                ...provider, // Keep ALL existing fields as base
-                // Update editable fields
-                name: document.getElementById('company-name').value.trim(),
-                region: document.getElementById('region').value,
-                category: document.getElementById('category').value,
-                service_type: document.getElementById('category').value,
-                description: document.getElementById('service-description').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
-                website: websiteValue,
-                // Explicitly preserve critical fields that must NEVER change during profile edit
-                plan: provider.plan, // CRITICAL: Never reset plan
-                id: provider.id,
-                email: provider.email
-            };
-
-            // Add uploaded photo data if available
-            if (uploadedPhotoData) {
-                updatedProvider.profilePhotoData = uploadedPhotoData;
-            } else if (provider.profilePhotoData) {
-                // Keep existing photo if no new one uploaded
-                updatedProvider.profilePhotoData = provider.profilePhotoData;
-            }
-
-            // Add work photos
-            updatedProvider.workPhotos = currentWorkPhotos;
-
-            // Debug logging
-            console.log('Saving provider profile:');
-            console.log('- Plan:', updatedProvider.plan);
-            console.log('- Description:', updatedProvider.description);
-            console.log('- Website:', updatedProvider.website);
-            console.log('- Full object:', updatedProvider);
-
-            // Validate required fields
-            if (!updatedProvider.name || !updatedProvider.region || !updatedProvider.category) {
-                alert('Prosím, vyplňte všetky povinné polia (Názov firmy, Kraj, Kategória služby).');
-                return;
-            }
-
-            // Validate description for Basic plan
-            const currentPlan = (provider.plan || 'basic').toLowerCase();
-            if (currentPlan === 'basic' && updatedProvider.description) {
-                const phonePattern = /(\+?\d{1,4}[\s-]?)?\(?\d{3,4}\)?[\s-]?\d{3,4}[\s-]?\d{3,4}/g;
-                const urlPattern = /(https?:\/\/|www\.|\\.sk|\\.cz|\\.com|\\.eu|\\.org|\\.net)/gi;
-
-                if (phonePattern.test(updatedProvider.description)) {
-                    alert('Pre Basic plán nie je dovolené uvádzať telefónne číslo v popise firmy.');
-                    return;
-                }
-
-                if (urlPattern.test(updatedProvider.description)) {
-                    alert('Pre Basic plán nie je dovolené uvádzať webstránku v popise firmy.');
-                    return;
-                }
-            }
-
-            // Update provider in localStorage
             try {
-                const customProviders = JSON.parse(localStorage.getItem('customProviders')) || [];
-                const providerIndex = customProviders.findIndex(p => p.id === loggedInProviderId);
+                // Build update payload matching Provider model
+                const updateData = {
+                    name: document.getElementById('company-name').value.trim(),
+                    categories: [document.getElementById('category').value],
+                    description: document.getElementById('service-description').value.trim(),
+                    active: true
+                };
 
-                if (providerIndex !== -1) {
-                    customProviders[providerIndex] = updatedProvider;
-                    localStorage.setItem('customProviders', JSON.stringify(customProviders));
+                // Note: Provider model doesn't have city field in the allowed updates
+                // Check backend routes/providers.js PATCH /me endpoint for allowed fields
 
-                    console.log('Provider saved successfully to localStorage');
-                    console.log('Redirecting to profile page...');
+                console.log('Updating provider profile:', updateData);
 
-                    // Success - redirect to provider's public profile to see changes immediately
-                    window.location.href = `provider-detail.html?id=${loggedInProviderId}`;
-                } else {
-                    alert('Chyba: Poskytovateľ nebol nájdený.');
+                // Make API call to update provider
+                const response = await fetch(`${API_BASE_URL}/api/providers/me`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                // Handle 401/403 - token invalid/expired
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.clear();
+                    alert('Relácia vypršala. Prihláste sa znova.');
+                    window.location.href = 'login.html';
+                    return;
                 }
-            } catch (e) {
-                console.error('Error saving provider data', e);
-                alert('Chyba pri ukladaní údajov. Skúste to prosím znova.');
+
+                // Handle other errors
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    console.error('Update failed:', errorData);
+                    alert(`Chyba pri ukladaní: ${errorData.message || 'Neznáma chyba'}`);
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                    }
+                    return;
+                }
+
+                const updatedProvider = await response.json();
+                console.log('Provider updated successfully:', updatedProvider);
+
+                alert('Profil bol úspešne aktualizovaný!');
+
+                // Redirect to dashboard
+                window.location.href = 'provider-dashboard.html';
+
+            } catch (error) {
+                console.error('Error updating provider:', error);
+                alert('Chyba pri ukladaní údajov. Skontrolujte pripojenie.');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
+                }
             }
         });
     }
 
-    // 6. Handle Logout Button
+    // ===================================================================
+    // HANDLE LOGOUT BUTTON
+    // ===================================================================
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            localStorage.removeItem('loggedInProviderId');
+            localStorage.clear();
             window.location.href = 'index.html';
         });
     }

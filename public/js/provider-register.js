@@ -83,50 +83,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const user = authResult.provider || authResult.user;
             if (user) {
-                // Ensure we save it in a consistent format for auth-state.js
-                // auth-state.js looks for 'loggedInProviderId' and 'customProviders' array or 'localStorage.getItem("loggedInProvider")' (?)
-                // Actually auth-state.js line 22: const providers = JSON.parse(localStorage.getItem('customProviders') || '[]');
-                // This seems to be legacy "local" logic.
-                // But wait, line 113 of original provider-register.js: 
-                // localStorage.setItem('loggedInProviderId', providerId);
-                // localStorage.setItem('loggedInProvider', JSON.stringify(registerResult.provider));
+                // Store in standard keys for new authentication flow
+                localStorage.setItem('user', JSON.stringify(user));
 
-                // I will maintain this legacy state for compatibility with existing dashboard code
+                // Also maintain legacy state for backward compatibility with existing dashboard code
                 localStorage.setItem('loggedInProviderId', user.id);
                 localStorage.setItem('loggedInProvider', JSON.stringify(user));
             }
 
             const userId = user ? user.id : (authResult.id || null);
 
-            // 4. Create Provider Profile (Optional Secondary Step)
-            // Only if we have a userId to link it to, and if the endpoint exists.
+            // 4. Create Provider Profile (Required for providers)
             if (userId) {
                 try {
                     const profilePayload = {
                         userId: userId,
-                        companyName: data.companyName,
-                        region: data.region,
+                        name: data.companyName,  // Provider model uses 'name'
+                        categories: [data.category],  // Provider model uses 'categories' array
                         city: data.city,
-                        category: data.category,
                         plan: data.plan,
-                        description: data.description,
-                        phone: data.phone,
-                        photo: photoBase64
+                        description: data.description || '',
+                        // Note: Provider model doesn't have phone, region, or photo fields
+                        // These would need to be added to the backend model if required
                     };
 
-                    // Optimistically try to update profile/provider details
-                    // We don't fail registration if this fails, as the user is already created
-                    await fetch(`${API_BASE_URL}/api/providers`, {
+                    const providerRes = await fetch(`${API_BASE_URL}/api/providers`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            ...(authResult.token ? { 'Authorization': `Bearer ${authResult.token}` } : {})
+                            'Authorization': `Bearer ${authResult.token}`
                         },
                         body: JSON.stringify(profilePayload)
                     });
+
+                    if (!providerRes.ok) {
+                        const errorData = await providerRes.json().catch(() => ({ message: 'Unknown error' }));
+                        console.warn('Provider profile creation failed:', errorData);
+                        throw new Error(errorData.message || 'Failed to create provider profile');
+                    }
+
+                    console.log('Provider profile created successfully');
                 } catch (profileErr) {
-                    console.warn('Profile creation step failed or endpoint not found:', profileErr);
-                    // Continue, as account is created
+                    console.error('Provider profile creation error:', profileErr);
+                    // Show error and stop - provider profile is required
+                    throw new Error('Registrácia používateľa úspešná, ale vytvorenie profilu zlyhalo. Kontaktujte podporu.');
                 }
             }
 

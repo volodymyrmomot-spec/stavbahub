@@ -30,47 +30,42 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ email, password })
             });
 
+            if (!response.ok) {
+                const data = await response.json();
+                showError(data.error || 'Nesprávny email alebo heslo.');
+                return;
+            }
+
             const data = await response.json();
 
-            if (response.ok && data.success) {
-                // Login successful
-                const provider = data.provider;
+            if (data.ok && data.token && data.user) {
+                // Login successful - store token and user
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
 
-                // Save to localStorage
-                localStorage.setItem('loggedInProviderId', provider.id);
-                localStorage.setItem('loggedInProvider', JSON.stringify(provider));
-
-                // Also update customProviders in localStorage to keep it in sync (optional but good for fallback)
-                let customProviders = JSON.parse(localStorage.getItem('customProviders') || '[]');
-                const existingIdx = customProviders.findIndex(p => p.id === provider.id);
-                if (existingIdx !== -1) {
-                    customProviders[existingIdx] = { ...customProviders[existingIdx], ...provider };
-                } else {
-                    customProviders.push(provider);
-                }
-                localStorage.setItem('customProviders', JSON.stringify(customProviders));
+                // Also maintain legacy keys for backward compatibility
+                localStorage.setItem('loggedInProviderId', data.user.id);
+                localStorage.setItem('loggedInProvider', JSON.stringify(data.user));
 
                 showSuccess('Prihlásenie úspešné! Presmerovávame vás...');
 
                 setTimeout(() => {
-                    window.location.href = 'dashboard.html';
+                    // Redirect based on role
+                    if (data.user.role === 'provider') {
+                        window.location.href = 'provider-dashboard.html';
+                    } else if (data.user.role === 'customer') {
+                        window.location.href = 'customer-dashboard.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
                 }, 1000);
             } else {
                 // Login failed
-                showError(data.error || 'Nesprávny email alebo heslo.');
+                showError('Nesprávny email alebo heslo.');
             }
         } catch (error) {
             console.error('Login error:', error);
-            // Fallback to local storage login if API fails (offline mode or legacy)
-            const result = attemptLocalLogin(email, password);
-            if (result.success) {
-                showSuccess('Prihlásenie úspešné (Offline režim)! Presmerovávame vás...');
-                setTimeout(() => {
-                    window.location.href = result.redirectUrl;
-                }, 1000);
-            } else {
-                showError('Nepodarilo sa prihlásiť. Skontrolujte pripojenie alebo údaje.');
-            }
+            showError('Nepodarilo sa prihlásiť. Skontrolujte pripojenie.');
         }
     });
 
