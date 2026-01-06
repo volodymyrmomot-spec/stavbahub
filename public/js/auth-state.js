@@ -28,16 +28,24 @@
                 role: 'provider',
                 userId: loggedInProviderId,
                 userName: provider.name || 'Poskytovateľ',
-                dashboardUrl: 'dashboard.html'
+                dashboardUrl: 'provider-dashboard.html' // Fixed: use provider-dashboard.html
             };
         } else {
-            // Provider not found, clear invalid session
-            localStorage.removeItem('loggedInProviderId');
+            // Provider not found in local cache, but might be valid tokens. 
+            // Do NOT clear session here. Just set generic state.
+            userState = {
+                isLoggedIn: true,
+                role: 'provider',
+                userId: loggedInProviderId,
+                userName: 'Poskytovateľ',
+                dashboardUrl: 'provider-dashboard.html'
+            };
         }
     } else if (loggedInCustomerId) {
         // Customer is logged in
         const customer = JSON.parse(localStorage.getItem('loggedInCustomer') || '{}');
 
+        // Verify ID match if object exists
         if (customer && customer.id === loggedInCustomerId) {
             userState = {
                 isLoggedIn: true,
@@ -47,9 +55,14 @@
                 dashboardUrl: 'customer-dashboard.html'
             };
         } else {
-            // Customer not found, clear invalid session
-            localStorage.removeItem('loggedInCustomerId');
-            localStorage.removeItem('loggedInCustomer');
+            // Customer not found locally but ID exists. Assume valid.
+            userState = {
+                isLoggedIn: true,
+                role: 'customer',
+                userId: loggedInCustomerId,
+                userName: 'Zákazník',
+                dashboardUrl: 'customer-dashboard.html'
+            };
         }
     }
 

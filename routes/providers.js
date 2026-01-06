@@ -27,18 +27,23 @@ const PLAN_PRIORITY_ADD_FIELDS = {
   }
 };
 
-// CREATE provider (only provider role)
+// CREATE or UPDATE provider (upsert) - ensures registration always succeeds even if profile exists
 router.post('/', auth('provider'), async (req, res) => {
   try {
-    const exists = await Provider.findOne({ userId: req.user.id });
-    if (exists) {
-      return res.status(409).json({ message: 'Provider already exists' });
-    }
-
-    const provider = await Provider.create({
-      userId: req.user.id,
-      ...req.body
-    });
+    // Upsert: update if exists, insert if not
+    const provider = await Provider.findOneAndUpdate(
+      { userId: req.user.id },
+      {
+        userId: req.user.id,
+        ...req.body
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true,
+        runValidators: true
+      }
+    );
 
     return res.status(201).json(provider);
   } catch (e) {
@@ -150,7 +155,7 @@ router.get('/', async (req, res) => {
     // сортировка: платные ВСЕГДА выше, дальше зависит от sort
     const secondSort =
       sort === 'rating'
-? { rating: -1, createdAt: -1 }
+        ? { rating: -1, createdAt: -1 }
         : { createdAt: -1 };
 
     const pipeline = [
