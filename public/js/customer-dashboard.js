@@ -1,35 +1,53 @@
-// Customer Dashboard Logic
+// Customer Dashboard Logic - JWT Token Based
 document.addEventListener('DOMContentLoaded', function () {
-    // Check if customer is logged in
-    const loggedInCustomerId = localStorage.getItem('loggedInCustomerId');
+    // Check if customer is logged in via JWT token
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
 
-    if (!loggedInCustomerId) {
+    if (!token || !userStr) {
         alert('Musíte byť prihlásený ako zákazník.');
         window.location.href = 'login.html';
         return;
     }
 
-    // Get customer data
-    const customers = JSON.parse(localStorage.getItem('customers') || '[]');
-    const customer = customers.find(c => c.id === loggedInCustomerId);
-
-    if (!customer) {
-        alert('Zákaznícky účet sa nenašiel.');
-        localStorage.removeItem('loggedInCustomerId');
-        localStorage.removeItem('loggedInCustomer');
+    let user;
+    try {
+        user = JSON.parse(userStr);
+    } catch (e) {
+        console.error('Failed to parse user data:', e);
+        alert('Chyba pri načítaní údajov používateľa.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.href = 'login.html';
         return;
     }
 
-    // Display customer info
-    document.getElementById('customer-name').textContent = customer.name || '-';
-    document.getElementById('customer-email').textContent = customer.email || '-';
-    document.getElementById('customer-phone').textContent = customer.phone || '-';
+    // Verify this is a customer account
+    if (user.role !== 'customer') {
+        alert('Táto stránka je len pre zákazníkov.');
+        // Redirect to appropriate dashboard based on role
+        if (user.role === 'provider') {
+            window.location.href = 'provider-dashboard.html';
+        } else {
+            window.location.href = 'index.html';
+        }
+        return;
+    }
 
-    // Display member since date
-    if (customer.created_at) {
-        const date = new Date(customer.created_at);
+    // Display customer info
+    document.getElementById('customer-name').textContent = user.name || '-';
+    document.getElementById('customer-email').textContent = user.email || '-';
+
+    // Phone might not be in the user object from JWT, try to get from legacy storage
+    const legacyCustomer = JSON.parse(localStorage.getItem('loggedInCustomer') || '{}');
+    document.getElementById('customer-phone').textContent = legacyCustomer.phone || user.phone || '-';
+
+    // Display member since date (from createdAt timestamp if available)
+    if (user.createdAt) {
+        const date = new Date(user.createdAt);
         document.getElementById('member-since').textContent = date.toLocaleDateString('sk-SK');
+    } else {
+        document.getElementById('member-since').textContent = '-';
     }
 
     // Load recent messages preview
@@ -52,9 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            localStorage.removeItem('loggedInCustomerId');
-            localStorage.removeItem('loggedInCustomer');
-            window.location.href = 'index.html';
+            handleLogout();
         });
     }
 
@@ -63,7 +79,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const chatManager = new ChatManager();
         chatManager.init();
 
-        const chats = chatManager.getChatsForUser(loggedInCustomerId, 'customer');
+        // Use user.id for chat lookup (maintain backward compatibility with loggedInCustomerId)
+        const customerId = user.id || localStorage.getItem('loggedInCustomerId');
+        const chats = chatManager.getChatsForUser(customerId, 'customer');
         const messagesPreview = document.getElementById('messages-preview');
 
         if (chats.length === 0) {
@@ -115,7 +133,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const chatManager = new ChatManager();
         chatManager.init();
 
-        const unreadCount = chatManager.getUnreadCount(loggedInCustomerId, 'customer');
+        const customerId = user.id || localStorage.getItem('loggedInCustomerId');
+        const unreadCount = chatManager.getUnreadCount(customerId, 'customer');
         const badge = document.getElementById('chat-badge');
 
         if (badge) {
@@ -126,6 +145,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 badge.style.display = 'none';
             }
         }
+    }
+
+    // Handle logout
+    function handleLogout() {
+        // Clear all authentication data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('loggedInCustomerId');
+        localStorage.removeItem('loggedInCustomer');
+        localStorage.removeItem('loggedInProviderId');
+        localStorage.removeItem('loggedInProvider');
+
+        window.location.href = 'index.html';
     }
 
     // Poll for new messages every 10 seconds

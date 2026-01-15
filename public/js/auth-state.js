@@ -4,7 +4,11 @@
 (function () {
     'use strict';
 
-    // Get current login state
+    // Get current login state - prioritize JWT token
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+
+    // Legacy keys for backward compatibility
     const loggedInProviderId = localStorage.getItem('loggedInProviderId');
     const loggedInCustomerId = localStorage.getItem('loggedInCustomerId');
 
@@ -17,52 +21,73 @@
         dashboardUrl: null
     };
 
-    if (loggedInProviderId) {
-        // Provider is logged in
-        const providers = JSON.parse(localStorage.getItem('customProviders') || '[]');
-        const provider = providers.find(p => p.id === loggedInProviderId);
+    // First, try JWT token authentication (new system)
+    if (token && userStr) {
+        try {
+            const user = JSON.parse(userStr);
 
-        if (provider) {
             userState = {
                 isLoggedIn: true,
-                role: 'provider',
-                userId: loggedInProviderId,
-                userName: provider.name || 'Poskytovateľ',
-                dashboardUrl: 'provider-dashboard.html' // Fixed: use provider-dashboard.html
+                role: user.role,
+                userId: user.id,
+                userName: user.name || (user.role === 'customer' ? 'Zákazník' : 'Poskytovateľ'),
+                dashboardUrl: user.role === 'customer' ? 'customer-dashboard.html' : 'provider-dashboard.html'
             };
-        } else {
-            // Provider not found in local cache, but might be valid tokens. 
-            // Do NOT clear session here. Just set generic state.
-            userState = {
-                isLoggedIn: true,
-                role: 'provider',
-                userId: loggedInProviderId,
-                userName: 'Poskytovateľ',
-                dashboardUrl: 'provider-dashboard.html'
-            };
+        } catch (e) {
+            console.error('Failed to parse user from token:', e);
+            // Fall back to legacy authentication
         }
-    } else if (loggedInCustomerId) {
-        // Customer is logged in
-        const customer = JSON.parse(localStorage.getItem('loggedInCustomer') || '{}');
+    }
 
-        // Verify ID match if object exists
-        if (customer && customer.id === loggedInCustomerId) {
-            userState = {
-                isLoggedIn: true,
-                role: 'customer',
-                userId: loggedInCustomerId,
-                userName: customer.name || 'Zákazník',
-                dashboardUrl: 'customer-dashboard.html'
-            };
-        } else {
-            // Customer not found locally but ID exists. Assume valid.
-            userState = {
-                isLoggedIn: true,
-                role: 'customer',
-                userId: loggedInCustomerId,
-                userName: 'Zákazník',
-                dashboardUrl: 'customer-dashboard.html'
-            };
+    // Fall back to legacy localStorage authentication if JWT not available
+    if (!userState.isLoggedIn) {
+        if (loggedInProviderId) {
+            // Provider is logged in (legacy)
+            const providers = JSON.parse(localStorage.getItem('customProviders') || '[]');
+            const provider = providers.find(p => p.id === loggedInProviderId);
+
+            if (provider) {
+                userState = {
+                    isLoggedIn: true,
+                    role: 'provider',
+                    userId: loggedInProviderId,
+                    userName: provider.name || 'Poskytovateľ',
+                    dashboardUrl: 'provider-dashboard.html'
+                };
+            } else {
+                // Provider not found in local cache, but might be valid tokens. 
+                // Do NOT clear session here. Just set generic state.
+                userState = {
+                    isLoggedIn: true,
+                    role: 'provider',
+                    userId: loggedInProviderId,
+                    userName: 'Poskytovateľ',
+                    dashboardUrl: 'provider-dashboard.html'
+                };
+            }
+        } else if (loggedInCustomerId) {
+            // Customer is logged in (legacy)
+            const customer = JSON.parse(localStorage.getItem('loggedInCustomer') || '{}');
+
+            // Verify ID match if object exists
+            if (customer && customer.id === loggedInCustomerId) {
+                userState = {
+                    isLoggedIn: true,
+                    role: 'customer',
+                    userId: loggedInCustomerId,
+                    userName: customer.name || 'Zákazník',
+                    dashboardUrl: 'customer-dashboard.html'
+                };
+            } else {
+                // Customer not found locally but ID exists. Assume valid.
+                userState = {
+                    isLoggedIn: true,
+                    role: 'customer',
+                    userId: loggedInCustomerId,
+                    userName: 'Zákazník',
+                    dashboardUrl: 'customer-dashboard.html'
+                };
+            }
         }
     }
 
@@ -139,8 +164,11 @@
 
     // Handle logout
     function handleLogout() {
-        // Clear all login data
+        // Clear all login data (both JWT and legacy)
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         localStorage.removeItem('loggedInProviderId');
+        localStorage.removeItem('loggedInProvider');
         localStorage.removeItem('loggedInCustomerId');
         localStorage.removeItem('loggedInCustomer');
 
