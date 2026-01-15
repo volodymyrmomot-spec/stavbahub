@@ -251,16 +251,39 @@ function startChat(providerId) {
 
 function openMessageModal() {
     const modal = document.getElementById('message-modal');
+
+    // Null check - if modal not found, show fallback alert
+    if (!modal) {
+        alert('Správy budú čoskoro dostupné. Messaging coming soon.');
+        console.error('Message modal element not found in DOM');
+        return;
+    }
+
     modal.style.display = 'flex';
-    document.getElementById('message-text').value = '';
-    document.getElementById('message-feedback').style.display = 'none';
+
+    const messageText = document.getElementById('message-text');
+    const messageFeedback = document.getElementById('message-feedback');
+
+    if (messageText) messageText.value = '';
+    if (messageFeedback) messageFeedback.style.display = 'none';
 }
 
 function closeMessageModal() {
     const modal = document.getElementById('message-modal');
+
+    // Null check
+    if (!modal) {
+        console.error('Message modal element not found in DOM');
+        return;
+    }
+
     modal.style.display = 'none';
-    document.getElementById('message-text').value = '';
-    document.getElementById('message-feedback').style.display = 'none';
+
+    const messageText = document.getElementById('message-text');
+    const messageFeedback = document.getElementById('message-feedback');
+
+    if (messageText) messageText.value = '';
+    if (messageFeedback) messageFeedback.style.display = 'none';
 }
 
 // Handle message form submission
