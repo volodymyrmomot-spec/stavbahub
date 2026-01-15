@@ -44,6 +44,26 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 async function initChat(providerId, user, token) {
+    // Check for required DOM elements immediately
+    const messagesEl = document.getElementById('messages');
+    const form = document.getElementById('messageForm');
+    const input = document.getElementById('messageInput');
+
+    if (!messagesEl) {
+        console.error('CRITICAL ERROR: Messages container (#messages) NOT FOUND in DOM');
+        return;
+    }
+    if (!form) {
+        console.error('CRITICAL ERROR: Chat form (#messageForm) NOT FOUND in DOM');
+        return;
+    }
+    if (!input) {
+        console.error('CRITICAL ERROR: Message input (#messageInput) NOT FOUND in DOM');
+        return;
+    }
+
+    console.log('All required DOM elements found. Initializing chat logic...');
+
     // Load provider info
     await loadProviderInfo(providerId);
 
@@ -100,11 +120,11 @@ async function loadMessages(providerId, token) {
 }
 
 function displayMessages(messages) {
-    const messagesContainer = document.getElementById('chat-messages');
+    const messagesContainer = document.getElementById('messages');
     const emptyState = document.getElementById('empty-state');
 
     if (!messagesContainer) {
-        console.error('Messages container not found');
+        console.error('Messages container (#messages) not found in DOM');
         return;
     }
 
@@ -126,10 +146,10 @@ function displayMessages(messages) {
 }
 
 function renderMessage(message) {
-    const messagesContainer = document.getElementById('chat-messages');
+    const messagesContainer = document.getElementById('messages');
 
     if (!messagesContainer) {
-        console.error('Messages container not found');
+        console.error('Messages container (#messages) not found in DOM');
         return;
     }
 
@@ -170,13 +190,15 @@ function formatTime(dateString) {
 }
 
 function setupMessageForm(providerId, user, token) {
-    const form = document.getElementById('chat-form');
-    const input = document.getElementById('chat-input');
+    const form = document.getElementById('messageForm');
+    const input = document.getElementById('messageInput');
 
     if (!form || !input) {
-        console.error('Form or input not found');
+        console.error('CRITICAL: Cannot setup form handler because elements are missing');
         return;
     }
+
+    console.log('Attaching submit handler to #messageForm');
 
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -191,7 +213,6 @@ function setupMessageForm(providerId, user, token) {
         input.disabled = true;
 
         console.log('Sending message to providerId:', providerId);
-        console.log('Message text length:', text.length);
 
         try {
             const response = await fetch('/api/messages', {
@@ -209,8 +230,6 @@ function setupMessageForm(providerId, user, token) {
             console.log('Response status:', response.status);
 
             const data = await response.json();
-
-            console.log('Response data:', data);
 
             if (!response.ok) {
                 throw new Error(data.error || 'Nepodarilo sa odoslať správu.');
@@ -239,16 +258,10 @@ function setupMessageForm(providerId, user, token) {
             input.focus();
         }
     });
-
-    // Auto-resize textarea
-    input.addEventListener('input', function () {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
 }
 
 function scrollToBottom() {
-    const messagesContainer = document.getElementById('chat-messages');
+    const messagesContainer = document.getElementById('messages');
     if (messagesContainer) {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }

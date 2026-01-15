@@ -81,7 +81,6 @@
             border-radius: 8px;
             font-family: inherit;
             font-size: 1rem;
-            resize: none;
         }
 
         .chat-input:focus {
@@ -112,8 +111,8 @@
                     <p style="color: var(--text-gray); font-size: 0.875rem;">Konverzácia</p>
                 </div>
 
-                <!-- Messages -->
-                <div class="chat-messages" id="chat-messages">
+                <!-- Messages container -->
+                <div class="chat-messages" id="messages">
                     <div class="empty-state" id="empty-state">
                         <p>Zatiaľ žiadne správy. Napíšte prvú správu!</p>
                     </div>
@@ -121,10 +120,10 @@
 
                 <!-- Input -->
                 <div class="chat-input-container">
-                    <form class="chat-input-form" id="chat-form">
-                        <textarea id="chat-input" class="chat-input" rows="1" placeholder="Napíšte správu..." required
-                            maxlength="2000"></textarea>
-                        <button type="submit" class="btn btn-primary">Odoslať</button>
+                    <form class="chat-input-form" id="messageForm">
+                        <input type="text" id="messageInput" class="chat-input" placeholder="Napíšte správu..." required
+                            maxlength="2000" autocomplete="off">
+                        <button type="submit" class="btn btn-primary" id="sendBtn">Odoslať</button>
                     </form>
                 </div>
             </div>
