@@ -1,183 +1,246 @@
-// Chat Conversation Page Logic
+// Chat Page Logic
 document.addEventListener('DOMContentLoaded', function () {
-    const chatManager = new ChatManager();
-    chatManager.init();
-
-    // Get chat ID from URL
+    // Get provider ID from URL
     const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('id');
+    const providerId = urlParams.get('providerId');
 
-    if (!chatId) {
-        alert('Neplatný chat.');
-        window.location.href = 'chats.html';
+    if (!providerId) {
+        alert('Chyba: ID poskytovateľa nebolo nájdené.');
+        window.location.href = 'providers.html';
         return;
     }
 
-    // Get current user info
-    const loggedInCustomerId = localStorage.getItem('loggedInCustomerId');
-    const loggedInProviderId = localStorage.getItem('loggedInProviderId');
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
 
-    let currentUserId, currentUserType, currentUserName;
-
-    if (loggedInCustomerId) {
-        currentUserId = loggedInCustomerId;
-        currentUserType = 'customer';
-        const customer = JSON.parse(localStorage.getItem('loggedInCustomer') || '{}');
-        currentUserName = customer.name || 'Zákazník';
-    } else if (loggedInProviderId) {
-        currentUserId = loggedInProviderId;
-        currentUserType = 'provider';
-        const provider = chatManager.getProviderById(loggedInProviderId);
-        currentUserName = provider ? provider.name : 'Poskytovateľ';
-    } else {
-        alert('Musíte byť prihlásený.');
+    if (!token || !userStr) {
+        alert('Musíte byť prihlásený, aby ste mohli chatovať. Prosím, prihláste sa.');
         window.location.href = 'login.html';
         return;
     }
 
-    // Validate access to this chat
-    if (!chatManager.validateAccess(chatId, currentUserId, currentUserType)) {
-        alert('Nemáte prístup k tomuto chatu.');
-        window.location.href = 'chats.html';
+    let user;
+    try {
+        user = JSON.parse(userStr);
+    } catch (e) {
+        console.error('Failed to parse user data:', e);
+        alert('Chyba pri načítaní údajov používateľa. Prosím, prihláste sa znova.');
+        window.location.href = 'login.html';
         return;
     }
 
-    // Get chat details
-    const chat = chatManager.getChatById(chatId);
-    if (!chat) {
-        alert('Chat sa nenašiel.');
-        window.location.href = 'chats.html';
+    // Check if user is a customer
+    if (user.role !== 'customer') {
+        alert('Len zákazníci môžu chatovať s poskytovateľmi.');
+        window.location.href = 'index.html';
         return;
     }
 
-    // Set chat partner name
-    const partnerName = currentUserType === 'customer' ? chat.provider_name : chat.customer_name;
-    document.getElementById('chat-partner-name').textContent = partnerName;
+    // Initialize chat
+    initChat(providerId, user, token);
+});
 
-    // Load messages
-    loadMessages();
+async function initChat(providerId, user, token) {
+    // Load provider info
+    await loadProviderInfo(providerId);
 
-    // Mark messages as read
-    chatManager.markAsRead(chatId, currentUserId, currentUserType);
+    // Load message thread
+    await loadMessages(providerId, token);
 
-    // Handle message form submission
-    const messageForm = document.getElementById('message-form');
-    const messageInput = document.getElementById('message-input');
+    // Setup form handler
+    setupMessageForm(providerId, user, token);
 
-    messageForm.addEventListener('submit', function (e) {
-        e.preventDefault();
+    // Auto-scroll to bottom
+    scrollToBottom();
+}
 
-        const content = messageInput.value.trim();
-        if (!content) return;
+async function loadProviderInfo(providerId) {
+    try {
+        const response = await fetch(`/api/providers/${providerId}`);
 
-        // Send message
-        const result = chatManager.sendMessage(chatId, currentUserId, currentUserType, currentUserName, content);
-
-        if (result.success) {
-            // Clear input
-            messageInput.value = '';
-
-            // Add message to UI
-            appendMessage(result.message);
-
-            // Scroll to bottom
-            scrollToBottom();
-        } else {
-            alert(result.error || 'Chyba pri odosielaní správy.');
+        if (!response.ok) {
+            throw new Error('Provider not found');
         }
+
+        const provider = await response.json();
+        const providerNameEl = document.getElementById('provider-name');
+
+        if (providerNameEl) {
+            providerNameEl.textContent = provider.name || 'Poskytovateľ';
+        }
+    } catch (error) {
+        console.error('Error loading provider:', error);
+        const providerNameEl = document.getElementById('provider-name');
+        if (providerNameEl) {
+            providerNameEl.textContent = 'Poskytovateľ';
+        }
+    }
+}
+
+async function loadMessages(providerId, token) {
+    try {
+        const response = await fetch(`/api/messages/thread?providerId=${providerId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load messages');
+        }
+
+        const data = await response.json();
+        displayMessages(data.messages || []);
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+function displayMessages(messages) {
+    const messagesContainer = document.getElementById('chat-messages');
+    const emptyState = document.getElementById('empty-state');
+
+    if (!messagesContainer) {
+        console.error('Messages container not found');
+        return;
+    }
+
+    // Hide empty state if there are messages
+    if (messages.length > 0 && emptyState) {
+        emptyState.style.display = 'none';
+    }
+
+    // Clear existing messages (except empty state)
+    const existingMessages = messagesContainer.querySelectorAll('.message');
+    existingMessages.forEach(msg => msg.remove());
+
+    // Render messages
+    messages.forEach(message => {
+        renderMessage(message);
     });
 
-    // Load and display messages
-    function loadMessages() {
-        const messages = chatManager.getMessages(chatId);
-        const messagesList = document.getElementById('messages-list');
+    scrollToBottom();
+}
 
-        if (messages.length === 0) {
-            messagesList.innerHTML = '<div class="empty-state"><p>Zatiaľ žiadne správy. Začnite konverzáciu!</p></div>';
+function renderMessage(message) {
+    const messagesContainer = document.getElementById('chat-messages');
+
+    if (!messagesContainer) {
+        console.error('Messages container not found');
+        return;
+    }
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message message-sent'; // All messages from customer are "sent"
+
+    const textDiv = document.createElement('div');
+    textDiv.textContent = message.text;
+
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = formatTime(message.createdAt);
+
+    messageDiv.appendChild(textDiv);
+    messageDiv.appendChild(timeDiv);
+
+    messagesContainer.appendChild(messageDiv);
+}
+
+function formatTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'Teraz';
+    if (diffMins < 60) return `Pred ${diffMins} min`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `Pred ${diffHours} h`;
+
+    return date.toLocaleDateString('sk-SK', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function setupMessageForm(providerId, user, token) {
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input');
+
+    if (!form || !input) {
+        console.error('Form or input not found');
+        return;
+    }
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const text = input.value.trim();
+
+        if (!text) {
             return;
         }
 
-        messagesList.innerHTML = '';
-        messages.forEach(msg => appendMessage(msg));
-        scrollToBottom();
-    }
+        // Disable input while sending
+        input.disabled = true;
 
-    // Append a single message to the UI
-    function appendMessage(message) {
-        const messagesList = document.getElementById('messages-list');
-
-        // Remove empty state if exists
-        const emptyState = messagesList.querySelector('.empty-state');
-        if (emptyState) {
-            emptyState.remove();
-        }
-
-        const isSent = message.sender_type === currentUserType;
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-        messageDiv.dataset.messageId = message.message_id;
-
-        const bubbleDiv = document.createElement('div');
-        bubbleDiv.className = 'message-bubble';
-        bubbleDiv.textContent = message.content;
-
-        const timeDiv = document.createElement('div');
-        timeDiv.className = 'message-time';
-        timeDiv.textContent = chatManager.formatMessageTime(message.timestamp);
-
-        // Add read indicator for sent messages
-        if (isSent && message.is_read) {
-            const readSpan = document.createElement('span');
-            readSpan.className = 'read-indicator';
-            readSpan.textContent = '✓';
-            timeDiv.appendChild(readSpan);
-        }
-
-        messageDiv.appendChild(bubbleDiv);
-        messageDiv.appendChild(timeDiv);
-        messagesList.appendChild(messageDiv);
-    }
-
-    // Scroll to bottom of messages
-    function scrollToBottom() {
-        const messagesList = document.getElementById('messages-list');
-        messagesList.scrollTop = messagesList.scrollHeight;
-    }
-
-    // Poll for new messages every 3 seconds
-    let lastMessageId = null;
-
-    function updateLastMessageId() {
-        const messages = chatManager.getMessages(chatId);
-        if (messages.length > 0) {
-            lastMessageId = messages[messages.length - 1].message_id;
-        }
-    }
-
-    updateLastMessageId();
-
-    setInterval(function () {
-        const newMessages = chatManager.getNewMessages(chatId, lastMessageId);
-
-        if (newMessages.length > 0) {
-            newMessages.forEach(msg => {
-                // Only append if from other user (avoid duplicates from own messages)
-                if (msg.sender_type !== currentUserType) {
-                    appendMessage(msg);
-                }
+        try {
+            const response = await fetch('/api/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    providerId: providerId,
+                    text: text
+                })
             });
 
-            // Update last message ID
-            updateLastMessageId();
+            const data = await response.json();
 
-            // Mark as read
-            chatManager.markAsRead(chatId, currentUserId, currentUserType);
+            if (!response.ok) {
+                throw new Error(data.error || 'Nepodarilo sa odoslať správu.');
+            }
+
+            // Hide empty state
+            const emptyState = document.getElementById('empty-state');
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+
+            // Add message to UI
+            renderMessage(data.message);
+
+            // Clear input
+            input.value = '';
 
             // Scroll to bottom
             scrollToBottom();
-        }
-    }, 3000);
 
-    // Focus input on load
-    messageInput.focus();
-});
+        } catch (error) {
+            console.error('Error sending message:', error);
+            alert(error.message || 'Chyba pri odosielaní správy.');
+        } finally {
+            input.disabled = false;
+            input.focus();
+        }
+    });
+
+    // Auto-resize textarea
+    input.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+}
+
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('chat-messages');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}

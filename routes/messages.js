@@ -84,4 +84,37 @@ router.get('/', auth(), async (req, res) => {
     }
 });
 
+/**
+ * GET /api/messages/thread?providerId=<ID>
+ * Get conversation thread between logged-in customer and a specific provider
+ * Requires customer authentication
+ */
+router.get('/thread', auth('customer'), async (req, res) => {
+    try {
+        const { providerId } = req.query;
+
+        if (!providerId) {
+            return res.status(400).json({ error: 'providerId is required' });
+        }
+
+        // Find all messages between this customer and provider
+        const messages = await Message.find({
+            customerId: req.user.id,
+            providerId: providerId
+        })
+            .populate('customerId', 'name email')
+            .populate('providerId', 'name')
+            .sort({ createdAt: 1 }) // Ascending order for chat display
+            .limit(200);
+
+        return res.json({
+            ok: true,
+            messages
+        });
+    } catch (error) {
+        console.error('Error fetching thread:', error);
+        return res.status(500).json({ error: 'Failed to fetch thread' });
+    }
+});
+
 module.exports = router;

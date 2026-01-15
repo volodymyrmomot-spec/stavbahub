@@ -248,8 +248,8 @@ function startChat(providerId) {
         return;
     }
 
-    // Redirect to send message page
-    window.location.href = `send-message.html?providerId=${providerId}`;
+    // Redirect to chat page
+    window.location.href = `chat.html?providerId=${providerId}`;
 }
 
 function openMessageModal() {
