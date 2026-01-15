@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Try to login via API
         try {
-            const response = await fetch(`/api/auth/login`, {
+            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -32,7 +32,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (!response.ok) {
                 const data = await response.json();
-                showError(data.error || 'Nesprávny email alebo heslo.');
+                // Display the actual backend error message
+                showError(data.error || data.message || 'Nesprávny email alebo heslo.');
                 return;
             }
 

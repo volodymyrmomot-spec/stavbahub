@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            const response = await fetch(`/api/auth/register`, {
+            const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -68,7 +68,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Registrácia zlyhala.');
+                // Display the actual backend error message
+                throw new Error(data.error || data.message || 'Registrácia zlyhala.');
             }
 
             // Success - mimic the login response structure
