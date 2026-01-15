@@ -17,6 +17,11 @@ const MessageSchema = new mongoose.Schema(
             required: true,
             trim: true,
             maxlength: 2000
+        },
+        senderRole: {
+            type: String,
+            enum: ['customer', 'provider'],
+            required: true
         }
     },
     { timestamps: true }

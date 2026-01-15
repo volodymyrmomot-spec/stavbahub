@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Správy - Stavbahub</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .inbox-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            min-height: 500px;
+        }
+
+        .inbox-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .inbox-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+        }
+
+        .conversation-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .conversation-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .conversation-item:hover {
+            background: #f9fafb;
+        }
+
+        .conversation-info {
+            flex: 1;
+            min-width: 0;
+            /* Truncate text */
+        }
+
+        .customer-name {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.25rem;
+        }
+
+        .last-message {
+            color: #6b7280;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .message-meta {
+            text-align: right;
+            margin-left: 1rem;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .empty-inbox {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header"></header>
+    <script src="js/header.js"></script>
+
+    <div class="container">
+        <div class="inbox-container">
+            <div class="inbox-header">
+                <h1 class="inbox-title">Správy</h1>
+            </div>
+
+            <div id="loading" style="padding: 2rem; text-align: center;">Načítavam konverzácie...</div>
+
+            <ul id="conversationList" class="conversation-list" style="display: none;">
+                <!-- Conversations will be injected here -->
+            </ul>
+
+            <div id="emptyState" class="empty-inbox" style="display: none;">
+                <p>Zatiaľ nemáte žiadne správy.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/messages.js"></script>
+</body>
+
+</html>

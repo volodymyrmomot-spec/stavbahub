@@ -10,61 +10,49 @@ const auth = require('../middleware/auth');
  */
 router.post('/', auth('customer'), async (req, res) => {
     try {
-        const { providerId, text } = req.body;
+        const { providerId, text, customerId } = req.body;
 
-        console.log('POST /api/messages - Request body:', { providerId, text: text ? `${text.substring(0, 50)}...` : null });
-        console.log('POST /api/messages - Customer ID:', req.user.id);
+        console.log('POST /api/messages - Role:', req.user.role);
 
-        if (!providerId) {
-            console.error('POST /api/messages - Missing providerId');
-            return res.status(400).json({ error: 'providerId is required' });
+        let finalProviderId = providerId;
+        let finalCustomerId = req.user.id;
+        let senderRole = 'customer';
+
+        if (req.user.role === 'provider') {
+            // If sender is provider, they MUST provide customerId
+            if (!customerId) {
+                return res.status(400).json({ error: 'customerId is required for provider' });
+            }
+
+            // Get provider profile to set providerId
+            const Provider = require('../models/Provider');
+            const provider = await Provider.findOne({ userId: req.user.id });
+            if (!provider) return res.status(404).json({ error: 'Provider profile not found' });
+
+            finalProviderId = provider._id;
+            finalCustomerId = customerId;
+            senderRole = 'provider';
+        } else {
+            // Customer sending
+            if (!providerId) {
+                return res.status(400).json({ error: 'providerId is required' });
+            }
         }
 
-        if (!text) {
-            console.error('POST /api/messages - Missing text');
-            return res.status(400).json({ error: 'text is required' });
-        }
-
-        if (text.trim().length === 0) {
-            console.error('POST /api/messages - Empty text');
+        if (!text || text.trim().length === 0) {
             return res.status(400).json({ error: 'Message text cannot be empty' });
         }
 
-        // Validate providerId is a valid ObjectId
-        const mongoose = require('mongoose');
-        if (!mongoose.Types.ObjectId.isValid(providerId)) {
-            console.error('POST /api/messages - Invalid providerId format:', providerId);
-            return res.status(400).json({ error: 'Invalid providerId format' });
-        }
-
-        // Check if provider exists
-        const Provider = require('../models/Provider');
-        const provider = await Provider.findById(providerId);
-
-        if (!provider) {
-            console.error('POST /api/messages - Provider not found:', providerId);
-            return res.status(404).json({ error: 'Provider not found' });
-        }
-
-        console.log('POST /api/messages - Provider found:', provider.name);
-
         const message = await Message.create({
-            customerId: req.user.id,
-            providerId,
-            text: text.trim()
+            customerId: finalCustomerId,
+            providerId: finalProviderId,
+            text: text.trim(),
+            senderRole
         });
-
-        console.log('POST /api/messages - Message created:', message._id);
 
         return res.status(201).json({
             ok: true,
-            message: {
-                id: message._id,
-                customerId: message.customerId,
-                providerId: message.providerId,
-                text: message.text,
-                createdAt: message.createdAt
-            }
+            message
         });
     } catch (error) {
         console.error('POST /api/messages - Error:', error);
@@ -73,74 +61,85 @@ router.post('/', auth('customer'), async (req, res) => {
 });
 
 /**
- * GET /api/messages
- * Get messages for logged-in user
- * - Customers see messages they sent
- * - Providers see messages they received
+ * GET /api/messages/provider-inbox
+ * Get list of conversations for logged-in provider
  */
-router.get('/', auth(), async (req, res) => {
+router.get('/provider-inbox', auth('provider'), async (req, res) => {
     try {
-        let query = {};
+        const Provider = require('../models/Provider');
+        const provider = await Provider.findOne({ userId: req.user.id });
 
-        if (req.user.role === 'customer') {
-            query.customerId = req.user.id;
-        } else if (req.user.role === 'provider') {
-            // Get provider profile to find providerId
-            const Provider = require('../models/Provider');
-            const provider = await Provider.findOne({ userId: req.user.id });
-
-            if (!provider) {
-                return res.status(404).json({ error: 'Provider profile not found' });
-            }
-
-            query.providerId = provider._id;
-        } else {
-            return res.status(403).json({ error: 'Unauthorized' });
+        if (!provider) {
+            return res.status(404).json({ error: 'Provider profile not found' });
         }
 
-        const messages = await Message.find(query)
-            .populate('customerId', 'name email')
-            .populate('providerId', 'name')
-            .sort({ createdAt: -1 })
-            .limit(100);
+        // Aggregate to get latest message per customer
+        const messages = await Message.aggregate([
+            { $match: { providerId: provider._id } },
+            { $sort: { createdAt: -1 } },
+            {
+                $group: {
+                    _id: "$customerId",
+                    lastMessage: { $first: "$text" },
+                    createdAt: { $first: "$createdAt" },
+                    senderRole: { $first: "$senderRole" }
+                }
+            },
+            { $sort: { createdAt: -1 } }
+        ]);
+
+        // Populate customer details
+        const User = require('../models/User');
+        const conversations = await User.populate(messages, { path: "_id", select: "name email" });
 
         return res.json({
             ok: true,
-            messages
+            conversations: conversations.map(c => ({
+                customerId: c._id._id,
+                customerName: c._id.name,
+                customerEmail: c._id.email,
+                lastMessage: c.lastMessage,
+                createdAt: c.createdAt,
+                lastSender: c.senderRole
+            }))
         });
+
     } catch (error) {
-        console.error('Error fetching messages:', error);
-        return res.status(500).json({ error: 'Failed to fetch messages' });
+        console.error('Error fetching inbox:', error);
+        return res.status(500).json({ error: 'Failed to fetch inbox' });
     }
 });
 
 /**
- * GET /api/messages/thread?providerId=<ID>
- * Get conversation thread between logged-in customer and a specific provider
- * Requires customer authentication
+ * GET /api/messages/thread
  */
-router.get('/thread', auth('customer'), async (req, res) => {
+router.get('/thread', auth(), async (req, res) => {
     try {
-        const { providerId } = req.query;
+        let { providerId, customerId } = req.query;
+        let query = {};
 
-        if (!providerId) {
-            return res.status(400).json({ error: 'providerId is required' });
+        if (req.user.role === 'customer') {
+            if (!providerId) return res.status(400).json({ error: 'providerId required' });
+            query.customerId = req.user.id;
+            query.providerId = providerId;
+        } else if (req.user.role === 'provider') {
+            if (!customerId) return res.status(400).json({ error: 'customerId required' });
+
+            const Provider = require('../models/Provider');
+            const provider = await Provider.findOne({ userId: req.user.id });
+            if (!provider) return res.status(404).json({ error: 'Provider profile not found' });
+
+            query.providerId = provider._id;
+            query.customerId = customerId;
         }
 
-        // Find all messages between this customer and provider
-        const messages = await Message.find({
-            customerId: req.user.id,
-            providerId: providerId
-        })
-            .populate('customerId', 'name email')
+        const messages = await Message.find(query)
+            .populate('customerId', 'name')
             .populate('providerId', 'name')
-            .sort({ createdAt: 1 }) // Ascending order for chat display
+            .sort({ createdAt: 1 })
             .limit(200);
 
-        return res.json({
-            ok: true,
-            messages
-        });
+        return res.json({ ok: true, messages });
     } catch (error) {
         console.error('Error fetching thread:', error);
         return res.status(500).json({ error: 'Failed to fetch thread' });

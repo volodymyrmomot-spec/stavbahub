@@ -107,7 +107,7 @@
                 const messagesLi = document.createElement('li');
                 messagesLi.className = 'nav-auth-item';
                 messagesLi.innerHTML = `
-                    <a href="chats.html" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <a href="messages.html" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
                         <span>💬 Správy</span>
                         <span id="nav-chat-badge" class="badge" style="display: none;"></span>
                     </a>
