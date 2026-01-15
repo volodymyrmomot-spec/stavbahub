@@ -9,25 +9,24 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    // Get static providers
-    const staticProviders = window.providersData || [];
+    console.log('Loading provider with ID:', providerId);
 
-    // Get custom providers from localStorage
-    const customProviders = JSON.parse(localStorage.getItem('customProviders') || '[]');
-
-    // Merge both sources
-    const allProviders = [...staticProviders, ...customProviders];
-
-    // Find the provider by ID
-    const provider = allProviders.find(p => p.id === providerId);
-
-    if (!provider) {
-        showError('Poskytovateľ s týmto ID neexistuje.');
-        return;
-    }
-
-    // Load provider data
-    loadProviderData(provider);
+    // Fetch provider from API
+    fetch(`/api/providers/${providerId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Provider not found');
+            }
+            return response.json();
+        })
+        .then(provider => {
+            console.log('Provider loaded:', provider);
+            loadProviderData(provider);
+        })
+        .catch(error => {
+            console.error('Error loading provider:', error);
+            showError('Poskytovateľ s týmto ID neexistuje.');
+        });
 });
 
 function loadProviderData(provider) {
@@ -134,8 +133,8 @@ function loadProviderData(provider) {
     // Handle reviews based on plan
     handleReviews(provider, plan);
 
-    // Make providerId globally available for chat button
-    window.providerId = provider.id;
+    // Make providerId globally available for chat button (use _id or id)
+    window.providerId = provider._id || provider.id;
 }
 
 function handlePhotos(provider, plan) {

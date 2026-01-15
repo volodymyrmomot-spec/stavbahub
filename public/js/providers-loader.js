@@ -159,12 +159,15 @@
             websiteHtml = `<div>🌐 <a href="${websiteUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color: var(--primary-blue); text-decoration: none;">Webstránka</a></div>`;
         }
 
+        // Get provider ID (API returns _id, fallback to id)
+        const providerId = provider._id || provider.id || '';
+
         let card = `
             <article class="card provider-card ${planClass}" 
                      data-region="${provider.region || ''}" 
                      data-service-type="${provider.service_type || ''}"
                      data-name="${provider.name || ''}"
-                     onclick="location.href='provider-detail.html?id=${provider.id || ''}&plan=${plan}'"
+                     onclick="location.href='provider-detail.html?id=${providerId}&plan=${plan}'"
                      style="cursor: pointer;">
                 
                 <div class="card-header-row" style="display: flex; gap: 1rem; align-items: start; margin-bottom: 1rem;">
@@ -241,7 +244,7 @@
                     <span class="stars">${stars}</span>
                     ${reviewsCount > 0 ? `<span class="reviews-count">(${reviewsCount})</span>` : ''}
                 </div>
-                <a href="provider-detail.html?id=${provider.id || ''}&plan=${plan}" 
+                <a href="provider-detail.html?id=${providerId}&plan=${plan}" 
                    class="btn btn-outline" 
                    style="margin-top: 1rem; width: 100%;">Zobraziť detail</a>
             </article>
