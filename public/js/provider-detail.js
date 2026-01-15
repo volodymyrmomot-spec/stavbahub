@@ -215,8 +215,14 @@ function showError(message) {
     console.error(message);
 }
 
-// Messaging functions
+// Messaging functions - Simple redirect approach
 function startChat(providerId) {
+    // Check if providerId exists
+    if (!providerId) {
+        alert('Chyba: ID poskytovateľa nebolo nájdené.');
+        return;
+    }
+
     // Check if user is logged in
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
@@ -242,11 +248,8 @@ function startChat(providerId) {
         return;
     }
 
-    // Store providerId for sending message
-    window.currentProviderId = providerId;
-
-    // Open message modal
-    openMessageModal();
+    // Redirect to send message page
+    window.location.href = `send-message.html?providerId=${providerId}`;
 }
 
 function openMessageModal() {
