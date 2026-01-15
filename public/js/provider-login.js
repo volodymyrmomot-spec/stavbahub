@@ -38,23 +38,44 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const data = await response.json();
+            console.log('Login response:', data);
 
             if (data.ok && data.token && data.user) {
+                // Normalize user object (backend returns _id, we need id)
+                const user = {
+                    id: data.user.id || data.user._id,
+                    email: data.user.email,
+                    role: data.user.role,
+                    name: data.user.name
+                };
+
+                console.log('Saving to localStorage:', { token: data.token, user });
+
                 // Login successful - store token and user
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('user', JSON.stringify(user));
 
                 // Also maintain legacy keys for backward compatibility
-                localStorage.setItem('loggedInProviderId', data.user.id);
-                localStorage.setItem('loggedInProvider', JSON.stringify(data.user));
+                if (user.role === 'customer') {
+                    localStorage.setItem('loggedInCustomerId', user.id);
+                    localStorage.setItem('loggedInCustomer', JSON.stringify(user));
+                } else if (user.role === 'provider') {
+                    localStorage.setItem('loggedInProviderId', user.id);
+                    localStorage.setItem('loggedInProvider', JSON.stringify(user));
+                }
+
+                console.log('localStorage after save:', {
+                    token: localStorage.getItem('token'),
+                    user: localStorage.getItem('user')
+                });
 
                 showSuccess('Prihlásenie úspešné! Presmerovávame vás...');
 
                 setTimeout(() => {
                     // Redirect based on role
-                    if (data.user.role === 'provider') {
+                    if (user.role === 'provider') {
                         window.location.href = 'provider-dashboard.html';
-                    } else if (data.user.role === 'customer') {
+                    } else if (user.role === 'customer') {
                         window.location.href = 'customer-dashboard.html';
                     } else {
                         window.location.href = 'index.html';

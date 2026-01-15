@@ -72,21 +72,40 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(data.error || data.message || 'Registrácia zlyhala.');
             }
 
-            // Success - mimic the login response structure
-            const user = data.user || data.customer || data.provider; // adapt to whatever backend returns
+            // Success - extract user and token from response
+            console.log('Registration successful:', data);
 
-            // Save to localStorage for session management
-            if (data.token) {
-                localStorage.setItem('token', data.token);
+            if (!data.token) {
+                throw new Error('Token not received from server');
             }
 
-            if (user) {
-                localStorage.setItem('user', JSON.stringify(user));
-
-                // Legacy keys for backward compatibility
-                localStorage.setItem('loggedInCustomerId', user.id);
-                localStorage.setItem('loggedInCustomer', JSON.stringify(user));
+            if (!data.user) {
+                throw new Error('User data not received from server');
             }
+
+            // Normalize user object (backend returns _id, we need id)
+            const user = {
+                id: data.user.id || data.user._id,
+                email: data.user.email,
+                role: data.user.role,
+                name: data.user.name
+            };
+
+            console.log('Saving to localStorage:', { token: data.token, user });
+
+            // Save JWT token and user data
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(user));
+
+            // Legacy keys for backward compatibility
+            localStorage.setItem('loggedInCustomerId', user.id);
+            localStorage.setItem('loggedInCustomer', JSON.stringify(user));
+
+            console.log('localStorage after save:', {
+                token: localStorage.getItem('token'),
+                user: localStorage.getItem('user'),
+                loggedInCustomerId: localStorage.getItem('loggedInCustomerId')
+            });
 
             showSuccess('Účet bol úspešne vytvorený! Presmerovávame vás...');
 
