@@ -12,19 +12,49 @@ router.post('/', auth('customer'), async (req, res) => {
     try {
         const { providerId, text } = req.body;
 
-        if (!providerId || !text) {
-            return res.status(400).json({ error: 'providerId and text are required' });
+        console.log('POST /api/messages - Request body:', { providerId, text: text ? `${text.substring(0, 50)}...` : null });
+        console.log('POST /api/messages - Customer ID:', req.user.id);
+
+        if (!providerId) {
+            console.error('POST /api/messages - Missing providerId');
+            return res.status(400).json({ error: 'providerId is required' });
+        }
+
+        if (!text) {
+            console.error('POST /api/messages - Missing text');
+            return res.status(400).json({ error: 'text is required' });
         }
 
         if (text.trim().length === 0) {
+            console.error('POST /api/messages - Empty text');
             return res.status(400).json({ error: 'Message text cannot be empty' });
         }
+
+        // Validate providerId is a valid ObjectId
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(providerId)) {
+            console.error('POST /api/messages - Invalid providerId format:', providerId);
+            return res.status(400).json({ error: 'Invalid providerId format' });
+        }
+
+        // Check if provider exists
+        const Provider = require('../models/Provider');
+        const provider = await Provider.findById(providerId);
+
+        if (!provider) {
+            console.error('POST /api/messages - Provider not found:', providerId);
+            return res.status(404).json({ error: 'Provider not found' });
+        }
+
+        console.log('POST /api/messages - Provider found:', provider.name);
 
         const message = await Message.create({
             customerId: req.user.id,
             providerId,
             text: text.trim()
         });
+
+        console.log('POST /api/messages - Message created:', message._id);
 
         return res.status(201).json({
             ok: true,
@@ -37,7 +67,7 @@ router.post('/', auth('customer'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('POST /api/messages - Error:', error);
         return res.status(500).json({ error: 'Failed to send message' });
     }
 });

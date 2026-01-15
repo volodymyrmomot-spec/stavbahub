@@ -1,12 +1,14 @@
 // Chat Page Logic
 document.addEventListener('DOMContentLoaded', function () {
-    // Get provider ID from URL
+    // Get provider ID from URL - accept both 'providerId' and 'id' params
     const urlParams = new URLSearchParams(window.location.search);
-    const providerId = urlParams.get('providerId');
+    const providerId = urlParams.get('providerId') || urlParams.get('id');
+
+    console.log('Chat page loaded with providerId:', providerId);
 
     if (!providerId) {
         alert('Chyba: ID poskytovateľa nebolo nájdené.');
-        window.location.href = 'providers.html';
+        window.history.back();
         return;
     }
 
@@ -188,6 +190,9 @@ function setupMessageForm(providerId, user, token) {
         // Disable input while sending
         input.disabled = true;
 
+        console.log('Sending message to providerId:', providerId);
+        console.log('Message text length:', text.length);
+
         try {
             const response = await fetch('/api/messages', {
                 method: 'POST',
@@ -201,7 +206,11 @@ function setupMessageForm(providerId, user, token) {
                 })
             });
 
+            console.log('Response status:', response.status);
+
             const data = await response.json();
+
+            console.log('Response data:', data);
 
             if (!response.ok) {
                 throw new Error(data.error || 'Nepodarilo sa odoslať správu.');
