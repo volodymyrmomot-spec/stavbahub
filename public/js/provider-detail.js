@@ -214,3 +214,137 @@ function showError(message) {
     document.getElementById('provider-description').textContent = message;
     console.error(message);
 }
+
+// Messaging functions
+function startChat(providerId) {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+
+    if (!token || !userStr) {
+        alert('Musíte byť prihlásený, aby ste mohli poslať správu. Prosím, prihláste sa.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    let user;
+    try {
+        user = JSON.parse(userStr);
+    } catch (e) {
+        alert('Chyba pri načítaní údajov používateľa. Prosím, prihláste sa znova.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // Check if user is a customer
+    if (user.role !== 'customer') {
+        alert('Len zákazníci môžu posielať správy poskytovateľom.');
+        return;
+    }
+
+    // Store providerId for sending message
+    window.currentProviderId = providerId;
+
+    // Open message modal
+    openMessageModal();
+}
+
+function openMessageModal() {
+    const modal = document.getElementById('message-modal');
+    modal.style.display = 'flex';
+    document.getElementById('message-text').value = '';
+    document.getElementById('message-feedback').style.display = 'none';
+}
+
+function closeMessageModal() {
+    const modal = document.getElementById('message-modal');
+    modal.style.display = 'none';
+    document.getElementById('message-text').value = '';
+    document.getElementById('message-feedback').style.display = 'none';
+}
+
+// Handle message form submission
+document.addEventListener('DOMContentLoaded', function () {
+    const messageForm = document.getElementById('message-form');
+
+    if (messageForm) {
+        messageForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const text = document.getElementById('message-text').value.trim();
+            const providerId = window.currentProviderId;
+            const token = localStorage.getItem('token');
+
+            if (!text) {
+                showMessageFeedback('Prosím, napíšte správu.', 'error');
+                return;
+            }
+
+            if (!providerId) {
+                showMessageFeedback('Chyba: ID poskytovateľa nebolo nájdené.', 'error');
+                return;
+            }
+
+            // Disable submit button
+            const submitBtn = messageForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Odosielam...';
+
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        providerId: providerId,
+                        text: text
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Nepodarilo sa odoslať správu.');
+                }
+
+                // Success
+                showMessageFeedback('Správa bola úspešne odoslaná!', 'success');
+                document.getElementById('message-text').value = '';
+
+                // Close modal after 2 seconds
+                setTimeout(() => {
+                    closeMessageModal();
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showMessageFeedback(error.message || 'Chyba pri odosielaní správy.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+    }
+});
+
+function showMessageFeedback(message, type) {
+    const feedback = document.getElementById('message-feedback');
+    feedback.textContent = message;
+    feedback.style.display = 'block';
+    feedback.style.padding = '0.75rem';
+    feedback.style.borderRadius = '6px';
+    feedback.style.marginTop = '1rem';
+
+    if (type === 'success') {
+        feedback.style.background = '#d1fae5';
+        feedback.style.color = '#065f46';
+        feedback.style.border = '1px solid #10b981';
+    } else {
+        feedback.style.background = '#fee2e2';
+        feedback.style.color = '#991b1b';
+        feedback.style.border = '1px solid #ef4444';
+    }
+}

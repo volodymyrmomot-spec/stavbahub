@@ -9,6 +9,7 @@ const testRoutes = require('./routes/test');
 const protectedRoutes = require('./routes/protected');
 const providerRoutes = require('./routes/providers');
 const metaRoutes = require('./routes/meta');
+const messageRoutes = require('./routes/messages');
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use('/api/test', testRoutes);
 app.use('/api/protected', protectedRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/meta', metaRoutes);
+app.use('/api/messages', messageRoutes);
 
 // frontend fallback
 app.use((req, res) => {
