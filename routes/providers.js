@@ -14,22 +14,34 @@ const { v2: cloudinary } = require('cloudinary');
 
 // Configure Cloudinary with environment variables
 // Graceful handling if env vars are missing
-const cloudinaryConfigured = !!(
-  process.env.CLOUDINARY_CLOUD_NAME &&
-  process.env.CLOUDINARY_API_KEY &&
-  process.env.CLOUDINARY_API_SECRET
-);
+let cloudinaryConfigured = false;
 
-if (cloudinaryConfigured) {
+if (process.env.CLOUDINARY_URL) {
+  // Option 1: Render / Deployment style (single URL)
   cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
+    secure: true
   });
-  console.log('✅ Cloudinary configured');
+  cloudinaryConfigured = true;
+  console.log('✅ Cloudinary configured via CLOUDINARY_URL');
 } else {
-  console.warn('⚠️  Cloudinary environment variables not set. Photo uploads will fail.');
-  console.warn('   Required: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET');
+  // Option 2: Separate variables
+  cloudinaryConfigured = !!(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
+
+  if (cloudinaryConfigured) {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    });
+    console.log('✅ Cloudinary configured via separate keys');
+  } else {
+    console.warn('⚠️  Cloudinary environment variables not set. Photo uploads will fail.');
+    console.warn('   Required: CLOUDINARY_URL or (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)');
+  }
 }
 
 // Configure Multer with memory storage (NO disk storage for Render)
