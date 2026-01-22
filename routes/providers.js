@@ -186,6 +186,16 @@ router.get('/', async (req, res) => {
       { $match: filter },
       PLAN_PRIORITY_ADD_FIELDS,
       { $sort: { planPriority: -1, ...secondSort } },
+      {
+        $addFields: {
+          phone: {
+            $cond: { if: { $eq: ['$plan', 'basic'] }, then: null, else: '$phone' }
+          },
+          website: {
+            $cond: { if: { $eq: ['$plan', 'basic'] }, then: null, else: '$website' }
+          }
+        }
+      },
       { $limit: 100 }
     ];
 
@@ -214,7 +224,16 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Not found' });
     }
 
-    return res.json(provider);
+    // Redact contact info for BASIC plan
+    const result = provider.toObject();
+    const plan = (result.plan || 'basic').toLowerCase();
+
+    if (plan === 'basic') {
+      result.phone = null;
+      result.website = null;
+    }
+
+    return res.json(result);
   } catch (e) {
     console.error(e);
     return res.status(500).json({ message: 'Server error' });

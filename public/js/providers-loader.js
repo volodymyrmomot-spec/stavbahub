@@ -190,8 +190,12 @@
 
                 <!-- Contact Info -->
                 <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem;">
-                    <div>📞 ${provider.phone || '-'}</div>
-                    ${websiteHtml}
+                    ${(provider.phone || provider.website) ? `
+                        ${provider.phone ? `<div>📞 ${provider.phone}</div>` : ''}
+                        ${websiteHtml}
+                    ` : `
+                        <div style="color: var(--primary-blue); font-weight: 500;">✉️ Kontakt iba cez správy</div>
+                    `}
                 </div>
 
                 <!-- Description -->
