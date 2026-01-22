@@ -5,6 +5,63 @@ const router = express.Router();
 const Provider = require('../models/Provider');
 const auth = require('../middleware/auth');
 
+// CRITICAL: Require dependencies BEFORE using them
+const multer = require('multer');
+const streamifier = require('streamifier');
+
+// Cloudinary v2 import (correct way)
+const { v2: cloudinary } = require('cloudinary');
+
+// Configure Cloudinary with environment variables
+// Graceful handling if env vars are missing
+const cloudinaryConfigured = !!(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+);
+
+if (cloudinaryConfigured) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+  console.log('✅ Cloudinary configured');
+} else {
+  console.warn('⚠️  Cloudinary environment variables not set. Photo uploads will fail.');
+  console.warn('   Required: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET');
+}
+
+// Configure Multer with memory storage (NO disk storage for Render)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit per file
+    files: 30 // Max 30 files per request
+  }
+});
+
+// Helper: Upload buffer to Cloudinary
+const uploadToCloudinary = (buffer) => {
+  if (!cloudinaryConfigured) {
+    return Promise.reject(new Error('Cloudinary is not configured. Check environment variables.'));
+  }
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'stavbahub_providers',
+        resource_type: 'image'
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
+};
+
 // --- helpers ---
 function escapeRegex(str = '') {
   // escapes regex special chars: .*+?^${}()|[]\
@@ -168,36 +225,6 @@ router.post('/me/work-photos', auth('provider'), upload.array('workPhotos', 30),
   }
 });
 
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const streamifier = require('streamifier');
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-// Configure Multer (memory storage)
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
-
-// Helper: Upload buffer to Cloudinary
-const uploadToCloudinary = (buffer) => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'stavbahub_providers' },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      }
-    );
-    streamifier.createReadStream(buffer).pipe(uploadStream);
-  });
-};
 
 // FULL UPDATE / UPSERT provider profile (PUT) - with PHOTO UPLOAD
 router.put('/me', auth('provider'), upload.fields([
