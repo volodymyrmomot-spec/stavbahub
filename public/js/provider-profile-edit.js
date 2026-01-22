@@ -95,16 +95,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // Display current plan (read-only)
+    // Display current plan (read-only) - MUST come from backend
     const planDisplay = document.getElementById('current-plan-display');
     if (planDisplay) {
-        const planText = provider.plan || 'basic';
-        if (planText.toLowerCase() === 'pro+' || planText.toLowerCase() === 'proplus') {
+        const planText = provider.plan;
+        if (!planText) {
+            planDisplay.textContent = 'Chyba: Plán nenájdený';
+            planDisplay.style.color = 'red';
+        } else if (planText.toLowerCase() === 'pro+' || planText.toLowerCase() === 'proplus' || planText.toLowerCase() === 'pro_plus') {
             planDisplay.textContent = 'Pro+';
         } else if (planText.toLowerCase() === 'pro') {
             planDisplay.textContent = 'Pro';
-        } else {
+        } else if (planText.toLowerCase() === 'basic') {
             planDisplay.textContent = 'Basic';
+        } else {
+            planDisplay.textContent = planText; // Show raw value if unknown
         }
     }
 
