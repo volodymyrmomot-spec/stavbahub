@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 module.exports = function auth(requiredRole = null) {
   return (req, res, next) => {
@@ -20,7 +21,11 @@ module.exports = function auth(requiredRole = null) {
         return res.status(403).json({ error: 'Forbidden' });
       }
 
-      req.user = decoded;
+      req.user = {
+        id: decoded.id || decoded.userId,
+        _id: new mongoose.Types.ObjectId(decoded.id || decoded.userId),
+        role: decoded.role,
+      };
       next();
     } catch (e) {
       return res.status(401).json({ error: 'Invalid token' });

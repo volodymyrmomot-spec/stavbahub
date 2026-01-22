@@ -1,34 +1,36 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const MessageSchema = new mongoose.Schema(
+const messageSchema = new mongoose.Schema(
     {
-        customerId: {
+        fromUser: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-            required: true
+            ref: "User",
+            required: true,
         },
-        providerId: {
+        toUser: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Provider',
-            required: true
+            ref: "User",
+            required: true,
+        },
+        chatKey: {
+            type: String,
+            required: true,
+            index: true,
         },
         text: {
             type: String,
             required: true,
             trim: true,
-            maxlength: 2000
+            maxlength: 2000,
         },
-        senderRole: {
-            type: String,
-            enum: ['customer', 'provider'],
-            required: true
-        }
+        readAt: {
+            type: Date,
+            default: null,
+        },
     },
     { timestamps: true }
 );
 
-// Index for faster queries
-MessageSchema.index({ customerId: 1, createdAt: -1 });
-MessageSchema.index({ providerId: 1, createdAt: -1 });
+messageSchema.index({ chatKey: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Message', MessageSchema);
+module.exports = mongoose.model("Message", messageSchema);
