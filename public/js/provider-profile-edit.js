@@ -197,10 +197,40 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             // Add delete event listeners
             document.querySelectorAll('.gallery-item-delete').forEach(btn => {
-                btn.addEventListener('click', function () {
+                btn.addEventListener('click', async function () {
                     const index = parseInt(this.getAttribute('data-index'));
-                    currentWorkPhotos.splice(index, 1);
-                    loadGalleryThumbnails();
+                    const photoUrl = currentWorkPhotos[index];
+
+                    if (!confirm('Naozaj chcete odstrániť túto fotografiu?')) {
+                        return;
+                    }
+
+                    try {
+                        // Remove from backend
+                        const updatedPhotos = currentWorkPhotos.filter((_, i) => i !== index);
+
+                        const response = await fetch('/api/providers/me', {
+                            method: 'PATCH',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ workPhotos: updatedPhotos })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to delete photo');
+                        }
+
+                        // Update local state
+                        currentWorkPhotos.splice(index, 1);
+                        loadGalleryThumbnails();
+                        alert('Fotografia bola odstránená');
+
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                        alert('Chyba pri odstraňovaní fotografie');
+                    }
                 });
             });
         }
@@ -258,27 +288,80 @@ document.addEventListener('DOMContentLoaded', async function () {
                     galleryError.style.display = 'block';
                 }
 
-                // Process valid files
+                // Process valid files - upload immediately
                 if (validFiles.length > 0) {
-                    let processed = 0;
-                    validFiles.forEach(file => {
-                        // Store file for upload
-                        window.newGalleryFiles.push(file);
-
-                        // Show preview
-                        const reader = new FileReader();
-                        reader.onload = function (event) {
-                            currentWorkPhotos.push(event.target.result);
-                            processed++;
-                            if (processed === validFiles.length) {
-                                loadGalleryThumbnails();
-                                workPhotosInput.value = '';
-                            }
-                        };
-                        reader.readAsDataURL(file);
-                    });
+                    uploadWorkPhotos(validFiles);
                 }
             });
+        }
+
+        // Function to upload work photos to backend
+        async function uploadWorkPhotos(files) {
+            const uploadBtn = document.getElementById('photo-upload');
+            if (uploadBtn) uploadBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                files.forEach(file => {
+                    formData.append('workPhotos', file);
+                });
+
+                console.log('Uploading', files.length, 'work photos...');
+
+                const response = await fetch('/api/providers/me/work-photos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                        // Don't set Content-Type - browser sets it with boundary for FormData
+                    },
+                    body: formData
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    const errorData = await response.json().catch(() => ({}));
+                    alert(errorData.message || 'Nemáte oprávnenie nahrávať fotografie.');
+                    return;
+                }
+
+                if (response.status === 413) {
+                    alert('Súbory sú príliš veľké. Maximálna veľkosť je 5MB na súbor.');
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Neznáma chyba' }));
+                    alert(errorData.message || 'Chyba pri nahrávaní fotografií');
+                    return;
+                }
+
+                const result = await response.json();
+                console.log('Upload successful:', result);
+                alert(result.message || 'Fotografie úspešne nahrané!');
+
+                // Refresh provider data to get updated workPhotos
+                const providerResponse = await fetch('/api/providers/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (providerResponse.ok) {
+                    const updatedProvider = await providerResponse.json();
+                    currentWorkPhotos = updatedProvider.workPhotos || [];
+                    loadGalleryThumbnails();
+                }
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Chyba pri nahrávaní fotografií. Skontrolujte pripojenie.');
+            } finally {
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.value = ''; // Clear file input
+                }
+            }
         }
 
         // Override the delete handler to sync with newGalleryFiles?

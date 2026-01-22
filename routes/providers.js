@@ -67,7 +67,7 @@ router.get('/me', auth('provider'), async (req, res) => {
 // UPDATE my provider profile (PATCH)
 router.patch('/me', auth('provider'), async (req, res) => {
   try {
-    const allowed = ['name', 'categories', 'city', 'description', 'active', 'phone', 'region', 'website', 'profilePhoto'];
+    const allowed = ['name', 'categories', 'city', 'description', 'active', 'phone', 'region', 'website', 'profilePhoto', 'workPhotos'];
     const updates = {};
 
     for (const key of allowed) {
@@ -85,6 +85,86 @@ router.patch('/me', auth('provider'), async (req, res) => {
   } catch (e) {
     console.error(e);
     return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// UPLOAD WORK PHOTOS (dedicated endpoint)
+router.post('/me/work-photos', auth('provider'), upload.array('workPhotos', 30), async (req, res) => {
+  try {
+    console.log('Work photos upload request received');
+    console.log('Files:', req.files ? req.files.length : 0);
+
+    // Get current provider
+    const provider = await Provider.findOne({ userId: req.user.id });
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider profile not found' });
+    }
+
+    // Check plan limits
+    const currentPlan = (provider.plan || 'basic').toLowerCase();
+    let maxPhotos = 0;
+    if (currentPlan === 'pro') maxPhotos = 3;
+    else if (['pro+', 'proplus', 'pro_plus'].includes(currentPlan)) maxPhotos = 30;
+
+    console.log('Current plan:', currentPlan, 'Max photos:', maxPhotos);
+
+    if (maxPhotos === 0) {
+      return res.status(403).json({
+        message: 'Nahrávanie fotografií je dostupné iba pre plány PRO a PRO+. Upgradujte svoj plán.'
+      });
+    }
+
+    // Check current photo count
+    const currentPhotoCount = (provider.workPhotos || []).length;
+    const availableSlots = maxPhotos - currentPhotoCount;
+
+    console.log('Current photos:', currentPhotoCount, 'Available slots:', availableSlots);
+
+    if (availableSlots <= 0) {
+      return res.status(400).json({
+        message: `Dosiahli ste limit ${maxPhotos} fotografií pre váš plán. Odstráňte existujúce fotografie alebo upgradujte plán.`
+      });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'Žiadne súbory neboli nahrané' });
+    }
+
+    // Limit to available slots
+    const filesToUpload = req.files.slice(0, availableSlots);
+    console.log('Uploading', filesToUpload.length, 'files to Cloudinary');
+
+    // Upload to Cloudinary
+    const uploadedUrls = [];
+    for (const file of filesToUpload) {
+      try {
+        const result = await uploadToCloudinary(file.buffer);
+        uploadedUrls.push(result.secure_url);
+        console.log('Uploaded:', result.secure_url);
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({
+          message: 'Chyba pri nahrávaní do Cloudinary: ' + uploadError.message
+        });
+      }
+    }
+
+    // Add to provider's workPhotos
+    const updatedWorkPhotos = [...(provider.workPhotos || []), ...uploadedUrls];
+    provider.workPhotos = updatedWorkPhotos;
+    await provider.save();
+
+    console.log('Successfully saved', uploadedUrls.length, 'photos. Total:', updatedWorkPhotos.length);
+
+    return res.json({
+      message: `Úspešne nahraných ${uploadedUrls.length} fotografií`,
+      workPhotos: updatedWorkPhotos,
+      uploaded: uploadedUrls
+    });
+
+  } catch (e) {
+    console.error('Work photos upload error:', e);
+    return res.status(500).json({ message: 'Server error: ' + e.message });
   }
 });
 
