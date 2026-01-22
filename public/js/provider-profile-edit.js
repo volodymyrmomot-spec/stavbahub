@@ -376,7 +376,7 @@ if (editForm) {
                 description: document.getElementById('service-description').value.trim(),
                 phone: document.getElementById('phone').value.trim(),
                 website: document.getElementById('website').value.trim(),
-                active: true
+                active: true,
                 // Plan is managed separately via plan-settings.html
             };
 
