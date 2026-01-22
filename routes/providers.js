@@ -88,16 +88,118 @@ router.patch('/me', auth('provider'), async (req, res) => {
   }
 });
 
-// FULL UPDATE / UPSERT provider profile (PUT) - requested by user
-router.put('/me', auth('provider'), async (req, res) => {
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Multer (memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
+// Helper: Upload buffer to Cloudinary
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'stavbahub_providers' },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
+};
+
+// FULL UPDATE / UPSERT provider profile (PUT) - with PHOTO UPLOAD
+router.put('/me', auth('provider'), upload.fields([
+  { name: 'profilePhoto', maxCount: 1 },
+  { name: 'workPhotos', maxCount: 30 }
+]), async (req, res) => {
   try {
-    // Upsert: update if exists, insert if not
-    const provider = await Provider.findOneAndUpdate(
+    // 1. Get current provider to check plan limits and existing data
+    let provider = await Provider.findOne({ userId: req.user.id });
+
+    // Check limits based on PREVIOUS plan (or default basic)
+    const currentPlan = (provider && provider.plan) ? provider.plan.toLowerCase() : 'basic';
+
+    let maxPhotos = 0;
+    if (['pro', 'proplus', 'pro+', 'pro_plus'].includes(currentPlan)) {
+      if (currentPlan === 'pro') maxPhotos = 3;
+      else maxPhotos = 30; // Pro+
+    }
+
+    // 2. Handle Profile Photo Upload
+    let profilePhotoUrl = undefined;
+    if (req.files && req.files.profilePhoto && req.files.profilePhoto[0]) {
+      const result = await uploadToCloudinary(req.files.profilePhoto[0].buffer);
+      profilePhotoUrl = result.secure_url;
+    }
+
+    // 3. Handle Work Photos Upload
+    let newWorkPhotos = [];
+    if (req.files && req.files.workPhotos) {
+      // If plan is basic, ignore uploads
+      if (maxPhotos > 0) {
+        for (const file of req.files.workPhotos) {
+          const result = await uploadToCloudinary(file.buffer);
+          newWorkPhotos.push(result.secure_url);
+        }
+      }
+    }
+
+    // 4. Prepare updates
+    // If provider doesn't exist, we are creating it (upsert)
+    // We merge existing workPhotos with new ones if needed, OR we overwrite?
+    // Frontend sends EVERYTHING? No, frontend gallery logic usually deletes locally.
+    // If we want to append, we push. 
+    // BUT `req.body` might not contain existing photos if we strictly use FormData for files.
+    // The frontend script in `provider-profile-edit.js` manages `currentWorkPhotos` array.
+    // But FormData cannot easily send an array of strings (existing URLs).
+    // Strategy: Frontend should send existing URLs as text fields `existingWorkPhotos`.
+    // We will IMPLEMENT THIS in Frontend.
+    // For now, let's assume `req.body.existingWorkPhotos` comes as array or single string.
+
+    let finalWorkPhotos = [];
+    if (req.body.existingWorkPhotos) {
+      if (Array.isArray(req.body.existingWorkPhotos)) {
+        finalWorkPhotos = [...req.body.existingWorkPhotos];
+      } else {
+        finalWorkPhotos = [req.body.existingWorkPhotos];
+      }
+    }
+
+    // Enforce limit on total
+    if (maxPhotos > 0) {
+      finalWorkPhotos = [...finalWorkPhotos, ...newWorkPhotos].slice(0, maxPhotos);
+    } else {
+      finalWorkPhotos = []; // Basic plan has 0
+    }
+
+    const updates = {
+      userId: req.user.id,
+      ...req.body,
+      workPhotos: finalWorkPhotos
+    };
+
+    if (profilePhotoUrl) {
+      updates.profilePhoto = profilePhotoUrl;
+      // Remove legacy data field if exists to save space? Optional.
+      updates.profilePhotoData = undefined;
+    }
+
+    // Upsert
+    provider = await Provider.findOneAndUpdate(
       { userId: req.user.id },
-      {
-        userId: req.user.id,
-        ...req.body
-      },
+      updates,
       {
         new: true,
         upsert: true,
@@ -108,7 +210,7 @@ router.put('/me', auth('provider'), async (req, res) => {
     return res.json(provider);
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error: ' + e.message });
   }
 });
 

@@ -43,6 +43,12 @@ const providerSchema = new mongoose.Schema(
       type: String
     },
 
+    workPhotos: [
+      {
+        type: String
+      }
+    ],
+
     description: {
       type: String
     },
