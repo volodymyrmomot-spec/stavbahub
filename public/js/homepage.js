@@ -138,7 +138,7 @@ function createProviderCard(provider) {
     const categories = provider.category || provider.service_type || '';
 
     return `
-        <div class="provider-card" data-id="${provider.id}">
+        <div class="provider-card" data-id="${provider._id || provider.id}">
             <div class="provider-header">
                 <h3 class="provider-name">${provider.name}</h3>
                 <span class="plan-badge ${planClass}">${planDisplay}</span>
@@ -151,7 +151,7 @@ function createProviderCard(provider) {
                 </div>
                 ${provider.is_verified ? '<div class="verified-badge" style="margin-bottom: 1rem; display: inline-flex;">✓ Overený</div>' : ''}
                 
-                <a href="provider-detail.html?id=${provider.id}" class="btn btn-primary" style="width: 100%; display: block; text-align: center; margin-top: 1rem;">
+                <a href="provider-detail.html?id=${provider._id || provider.id}" class="btn btn-primary" style="width: 100%; display: block; text-align: center; margin-top: 1rem;">
                     Kontaktovať majstra
                 </a>
             </div>
