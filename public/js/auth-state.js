@@ -95,6 +95,49 @@
     function updateNavigation() {
         const navLists = document.querySelectorAll('.nav-list');
 
+        // Handle "Majstri" link replacement globally
+        const majstriLinks = document.querySelectorAll('a[href="providers.html"], a[href="messages.html?replaced=true"]');
+
+        majstriLinks.forEach(link => {
+            if (userState.isLoggedIn && userState.role === 'provider') {
+                // Change to Moje správy
+                // Check if already changed to avoid loop/flicker if we verify by href
+                // We mark it to track it
+                link.innerHTML = 'Moje správy <span id="nav-chat-badge" class="badge" style="display:none; margin-left:8px;"></span>';
+                link.href = 'messages.html'; // NOTE: This breaks the querySelector on next run if we don't track it. 
+                // But we re-run querySelector or use a class?
+                // Actually, if we change href to messages.html, the selector 'a[href="providers.html"]' won't find it next time.
+                // That's fine, as long as we handle logout reset.
+                // But wait, if we logout, how do we find it back?
+                // We should add a marking class/attribute.
+                link.setAttribute('data-original-href', 'providers.html');
+                link.setAttribute('data-replaced', 'true');
+                link.style.display = 'flex';
+                link.style.alignItems = 'center';
+            } else {
+                // Reset if it was replaced (e.g. logout or customer login)
+                if (link.getAttribute('data-replaced') === 'true' || link.href.includes('messages.html')) {
+                    // We need to be careful not to target the actual Messages link if we had one?
+                    // But we targeted 'a[href="providers.html"]' initially.
+                    // On reset, we look for data-replaced.
+                }
+            }
+        });
+
+        // Better reset strategy: Select by data attribute if we added it, OR select by original href.
+        const replacedLinks = document.querySelectorAll('a[data-replaced="true"]');
+        replacedLinks.forEach(link => {
+            if (!userState.isLoggedIn || userState.role !== 'provider') {
+                link.textContent = 'Majstri';
+                link.href = 'providers.html';
+                link.removeAttribute('data-replaced');
+                link.removeAttribute('style');
+                // Remove badge if inside
+                const badge = link.querySelector('#nav-chat-badge');
+                if (badge) badge.remove();
+            }
+        });
+
         navLists.forEach(navList => {
             // Remove any existing auth-related items
             const existingAuthItems = navList.querySelectorAll('.nav-auth-item, .nav-profile-item');
@@ -103,16 +146,18 @@
             if (userState.isLoggedIn) {
                 // User is logged in - show profile and logout
 
-                // Add Messages link (for both customers and providers)
-                const messagesLi = document.createElement('li');
-                messagesLi.className = 'nav-auth-item';
-                messagesLi.innerHTML = `
-                    <a href="messages.html" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span>💬 Správy</span>
-                        <span id="nav-chat-badge" class="badge" style="display: none;"></span>
-                    </a>
-                `;
-                navList.appendChild(messagesLi);
+                // Add Messages link (ONLY for customers, since Providers have the replaced link)
+                if (userState.role === 'customer') {
+                    const messagesLi = document.createElement('li');
+                    messagesLi.className = 'nav-auth-item';
+                    messagesLi.innerHTML = `
+                        <a href="messages.html" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>💬 Správy</span>
+                            <span id="nav-chat-badge" class="badge" style="display: none;"></span>
+                        </a>
+                    `;
+                    navList.appendChild(messagesLi);
+                }
 
                 // Add Profile link
                 const profileLi = document.createElement('li');
