@@ -371,9 +371,8 @@ if (editForm) {
                 description: document.getElementById('service-description').value.trim(),
                 phone: document.getElementById('phone').value.trim(),
                 website: document.getElementById('website').value.trim(),
-                active: true,
-                // Plan is read-only usually, but maybe we send it to keep it?
-                plan: provider.plan
+                active: true
+                // Plan is managed separately via plan-settings.html
             };
 
             console.log('Updating provider profile:', updateData);

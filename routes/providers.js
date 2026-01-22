@@ -67,7 +67,7 @@ router.get('/me', auth('provider'), async (req, res) => {
 // UPDATE my provider profile (PATCH)
 router.patch('/me', auth('provider'), async (req, res) => {
   try {
-    const allowed = ['name', 'categories', 'city', 'description', 'active', 'plan', 'phone', 'region', 'website', 'profilePhoto'];
+    const allowed = ['name', 'categories', 'city', 'description', 'active', 'phone', 'region', 'website', 'profilePhoto'];
     const updates = {};
 
     for (const key of allowed) {
@@ -189,6 +189,10 @@ router.put('/me', auth('provider'), upload.fields([
       ...req.body,
       workPhotos: finalWorkPhotos
     };
+
+    // Protect critical fields - Plan should NOT be updated via profile edit
+    // Plan changes must go through specific endpoints or payment flows
+    delete updates.plan;
 
     if (profilePhotoUrl) {
       updates.profilePhoto = profilePhotoUrl;
