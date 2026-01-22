@@ -135,6 +135,12 @@ function loadProviderData(provider) {
 
     // Make providerId globally available for chat button (use _id or id)
     window.providerId = provider._id || provider.id;
+    // Store the underlying User ID for chat (handle populated object or direct ID)
+    if (provider.userId && typeof provider.userId === 'object') {
+        window.providerUserId = provider.userId._id || provider.userId.id;
+    } else {
+        window.providerUserId = provider.userId;
+    }
 }
 
 function handlePhotos(provider, plan) {
@@ -215,7 +221,7 @@ function showError(message) {
     console.error(message);
 }
 
-// Messaging functions - Simple redirect approach
+// Messaging functions - Redirect to chat
 function startChat(providerId) {
     // Check if providerId exists
     if (!providerId) {
@@ -248,129 +254,40 @@ function startChat(providerId) {
         return;
     }
 
-    // Redirect to chat page
-    window.location.href = `chat.html?providerId=${providerId}`;
-}
+    // We need the provider's USER ID.
+    // The providerId passed here is likely the Provider Model _id.
+    // We need to fetch the provider details to get the userId if it's not available.
+    // However, in loadProviderData we have the full provider object.
+    // Let's modify loadProviderData to store the userId globally or pass it.
 
-function openMessageModal() {
-    const modal = document.getElementById('message-modal');
+    // Attempt to get provider userId from the global scope or fetch it
+    // In loadProviderData we set window.providerId, but that is the provider document ID.
+    // We should also set window.providerUserId.
 
-    // Null check - if modal not found, show fallback alert
-    if (!modal) {
-        alert('Správy budú čoskoro dostupné. Messaging coming soon.');
-        console.error('Message modal element not found in DOM');
-        return;
-    }
+    const targetUserId = window.providerUserId;
 
-    modal.style.display = 'flex';
-
-    const messageText = document.getElementById('message-text');
-    const messageFeedback = document.getElementById('message-feedback');
-
-    if (messageText) messageText.value = '';
-    if (messageFeedback) messageFeedback.style.display = 'none';
-}
-
-function closeMessageModal() {
-    const modal = document.getElementById('message-modal');
-
-    // Null check
-    if (!modal) {
-        console.error('Message modal element not found in DOM');
-        return;
-    }
-
-    modal.style.display = 'none';
-
-    const messageText = document.getElementById('message-text');
-    const messageFeedback = document.getElementById('message-feedback');
-
-    if (messageText) messageText.value = '';
-    if (messageFeedback) messageFeedback.style.display = 'none';
-}
-
-// Handle message form submission
-document.addEventListener('DOMContentLoaded', function () {
-    const messageForm = document.getElementById('message-form');
-
-    if (messageForm) {
-        messageForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const text = document.getElementById('message-text').value.trim();
-            const providerId = window.currentProviderId;
-            const token = localStorage.getItem('token');
-
-            if (!text) {
-                showMessageFeedback('Prosím, napíšte správu.', 'error');
-                return;
-            }
-
-            if (!providerId) {
-                showMessageFeedback('Chyba: ID poskytovateľa nebolo nájdené.', 'error');
-                return;
-            }
-
-            // Disable submit button
-            const submitBtn = messageForm.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Odosielam...';
-
-            try {
-                const response = await fetch('/api/messages', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        providerId: providerId,
-                        text: text
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Nepodarilo sa odoslať správu.');
+    if (targetUserId) {
+        window.location.href = `chat.html?userId=${targetUserId}`;
+    } else {
+        // Fallback: fetch again or error
+        fetch(`/api/providers/${providerId}`)
+            .then(r => r.json())
+            .then(p => {
+                let uid = p.userId;
+                if (uid && typeof uid === 'object') {
+                    uid = uid._id || uid.id;
                 }
 
-                // Success
-                showMessageFeedback('Správa bola úspešne odoslaná!', 'success');
-                document.getElementById('message-text').value = '';
-
-                // Close modal after 2 seconds
-                setTimeout(() => {
-                    closeMessageModal();
-                }, 2000);
-
-            } catch (error) {
-                console.error('Error sending message:', error);
-                showMessageFeedback(error.message || 'Chyba pri odosielaní správy.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-            }
-        });
-    }
-});
-
-function showMessageFeedback(message, type) {
-    const feedback = document.getElementById('message-feedback');
-    feedback.textContent = message;
-    feedback.style.display = 'block';
-    feedback.style.padding = '0.75rem';
-    feedback.style.borderRadius = '6px';
-    feedback.style.marginTop = '1rem';
-
-    if (type === 'success') {
-        feedback.style.background = '#d1fae5';
-        feedback.style.color = '#065f46';
-        feedback.style.border = '1px solid #10b981';
-    } else {
-        feedback.style.background = '#fee2e2';
-        feedback.style.color = '#991b1b';
-        feedback.style.border = '1px solid #ef4444';
+                if (uid) {
+                    window.location.href = `chat.html?userId=${uid}`;
+                } else {
+                    alert('Chyba: Nepodarilo sa nájsť používateľa pre tohto poskytovateľa.');
+                }
+            })
+            .catch(e => {
+                console.error(e);
+                alert('Chyba pri pripájaní k chatu.');
+            });
     }
 }
+

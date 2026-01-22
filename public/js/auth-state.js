@@ -177,26 +177,34 @@
     }
 
     // Update chat badge
-    function updateChatBadge() {
-        // Only update if ChatManager is available
-        if (typeof ChatManager === 'undefined') {
-            return;
-        }
+    async function updateChatBadge() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
 
         try {
-            const chatManager = new ChatManager();
-            chatManager.init();
+            const response = await fetch('/api/messages/threads', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-            const unreadCount = chatManager.getUnreadCount(userState.userId, userState.role);
-            const badge = document.getElementById('nav-chat-badge');
+            if (response.ok) {
+                const data = await response.json();
+                const threads = data.threads || [];
 
-            if (badge && unreadCount > 0) {
-                badge.textContent = unreadCount;
-                badge.style.display = 'inline-block';
+                // Sum unread counts
+                const totalUnread = threads.reduce((acc, t) => acc + (t.unreadCount || 0), 0);
+
+                const badge = document.getElementById('nav-chat-badge');
+                if (badge) {
+                    if (totalUnread > 0) {
+                        badge.textContent = totalUnread;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
             }
         } catch (error) {
-            // ChatManager not available on this page, ignore
-            console.log('ChatManager not available');
+            console.error('Error fetching unread count:', error);
         }
     }
 
