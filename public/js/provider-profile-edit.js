@@ -45,6 +45,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     } catch (error) {
         console.error('Error loading provider data:', error);
+
+        // Set plan display to error state
+        const planDisplay = document.getElementById('current-plan-display');
+        if (planDisplay) {
+            planDisplay.textContent = 'Nepodarilo sa načítať plán';
+            planDisplay.style.color = 'red';
+        }
+
         alert('Chyba pri načítaní údajov. Skontrolujte pripojenie.');
         return;
     }
@@ -329,117 +337,117 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Submit: Iterate `currentFiles`. If not null, append to formData 'workPhotos'. If null, append `currentWorkPhotos[i]` to 'existingWorkPhotos'.
         // YES. This is the correct solution.
 
+    } else {
+        // Show Basic plan message for non-Pro plans
+        if (basicMessage) {
+            basicMessage.style.display = 'block';
+        }
     }
-    // Show Basic plan message
-    if (basicMessage) {
-        basicMessage.style.display = 'block';
-    }
-}
 
     // ===================================================================
     // HANDLE FORM SUBMISSION - UPDATE VIA API
     // ===================================================================
     const editForm = document.getElementById('edit-profile-form');
-if (editForm) {
-    editForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
+    if (editForm) {
+        editForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-        const submitBtn = editForm.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn ? submitBtn.textContent : '';
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Ukladám...';
-        }
-
-        try {
-            // Build update payload matching Provider model
-            const updateData = {
-                name: document.getElementById('company-name').value.trim(),
-                categories: [document.getElementById('category').value],
-                city: document.getElementById('region').value, // wait, form has region but maybe mapped to city? Let's check edit-profile.html. Input id='region' is select. 
-                // Actually provider model has BOTH city and region.
-                // edit-profile.html has id="region" (select) but NO id="city"?
-                // Let's re-read edit-profile.html content from Step 161.
-                // It has <select name="region" id="region">.
-                // It does NOT have a city input? 
-                // register-firm.html has BOTH city and region.
-                // if edit-profile.html lacks city, we might lose data if we don't send it or if we send undefined.
-                // We should preserve existing city if not editable.
-                // Or maybe region select is actually serving as city/location?
-                // Let's assume region is region. And city is missing from edit form?? 
-                // User requirement: "Save companyName, category, region, phone, description". City wasn't explicitly mentioned in "Save...", but it is required in Model.
-                // If I send PUT (upsert), I MUST send required fields.
-                // If I don't have city in form, I must use existing city from `provider` object loaded earlier.
-
-                region: document.getElementById('region').value,
-                city: provider.city || '', // Keep existing city
-                description: document.getElementById('service-description').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
-                website: document.getElementById('website').value.trim(),
-                active: true,
-                // Plan is managed separately via plan-settings.html
-            };
-
-            console.log('Updating provider profile:', updateData);
-
-            // Make API call to update provider
-            const response = await fetch(`/api/providers/me`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updateData)
-            });
-
-            // Handle 401/403 - token invalid/expired
-            if (response.status === 401 || response.status === 403) {
-                localStorage.clear();
-                alert('Relácia vypršala. Prihláste sa znova.');
-                window.location.href = 'login.html';
-                return;
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn ? submitBtn.textContent : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Ukladám...';
             }
 
-            // Handle other errors
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-                console.error('Update failed:', errorData);
-                alert(`Chyba pri ukladaní: ${errorData.message || 'Neznáma chyba'}`);
+            try {
+                // Build update payload matching Provider model
+                const updateData = {
+                    name: document.getElementById('company-name').value.trim(),
+                    categories: [document.getElementById('category').value],
+                    city: document.getElementById('region').value, // wait, form has region but maybe mapped to city? Let's check edit-profile.html. Input id='region' is select. 
+                    // Actually provider model has BOTH city and region.
+                    // edit-profile.html has id="region" (select) but NO id="city"?
+                    // Let's re-read edit-profile.html content from Step 161.
+                    // It has <select name="region" id="region">.
+                    // It does NOT have a city input? 
+                    // register-firm.html has BOTH city and region.
+                    // if edit-profile.html lacks city, we might lose data if we don't send it or if we send undefined.
+                    // We should preserve existing city if not editable.
+                    // Or maybe region select is actually serving as city/location?
+                    // Let's assume region is region. And city is missing from edit form?? 
+                    // User requirement: "Save companyName, category, region, phone, description". City wasn't explicitly mentioned in "Save...", but it is required in Model.
+                    // If I send PUT (upsert), I MUST send required fields.
+                    // If I don't have city in form, I must use existing city from `provider` object loaded earlier.
+
+                    region: document.getElementById('region').value,
+                    city: provider.city || '', // Keep existing city
+                    description: document.getElementById('service-description').value.trim(),
+                    phone: document.getElementById('phone').value.trim(),
+                    website: document.getElementById('website').value.trim(),
+                    active: true,
+                    // Plan is managed separately via plan-settings.html
+                };
+
+                console.log('Updating provider profile:', updateData);
+
+                // Make API call to update provider
+                const response = await fetch(`/api/providers/me`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                // Handle 401/403 - token invalid/expired
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.clear();
+                    alert('Relácia vypršala. Prihláste sa znova.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Handle other errors
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    console.error('Update failed:', errorData);
+                    alert(`Chyba pri ukladaní: ${errorData.message || 'Neznáma chyba'}`);
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                    }
+                    return;
+                }
+
+                const updatedProvider = await response.json();
+                console.log('Provider updated successfully:', updatedProvider);
+
+                alert('Profil bol úspešne aktualizovaný!');
+
+                // Redirect to dashboard
+                window.location.href = 'provider-dashboard.html';
+
+            } catch (error) {
+                console.error('Error updating provider:', error);
+                alert('Chyba pri ukladaní údajov. Skontrolujte pripojenie.');
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalBtnText;
                 }
-                return;
             }
+        });
+    }
 
-            const updatedProvider = await response.json();
-            console.log('Provider updated successfully:', updatedProvider);
-
-            alert('Profil bol úspešne aktualizovaný!');
-
-            // Redirect to dashboard
-            window.location.href = 'provider-dashboard.html';
-
-        } catch (error) {
-            console.error('Error updating provider:', error);
-            alert('Chyba pri ukladaní údajov. Skontrolujte pripojenie.');
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalBtnText;
-            }
-        }
-    });
-}
-
-// ===================================================================
-// HANDLE LOGOUT BUTTON
-// ===================================================================
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        localStorage.clear();
-        window.location.href = 'index.html';
-    });
-}
+    // ===================================================================
+    // HANDLE LOGOUT BUTTON
+    // ===================================================================
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            localStorage.clear();
+            window.location.href = 'index.html';
+        });
+    }
 });
